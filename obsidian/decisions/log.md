@@ -20,3 +20,12 @@ Record durable decisions using this structure:
 - **Affected paths:** `src/App.tsx`, `src/styles.css`, `src/App.test.tsx`.
 - **Related notes:** [[../architecture/overview|Architecture]], [[../architecture/feature-map|Feature Map]].
 
+## 2026-06-25 — Dependency-light visual redesign
+
+- **Context:** The landing page needed a scoped redesign with custom visuals, animation, and cursor behavior while preserving verified Portuguese FlowAI content and existing clipboard behavior.
+- **Decision:** Keep the redesign in `src/App.tsx` and `src/styles.css` using React hooks, CSS transforms/opacity, media queries, and no new runtime dependencies.
+- **Rationale:** The app is a static single-page surface; dependency-free components and CSS keep behavior inspectable, responsive, accessible, and easy to test.
+- **Consequences:** Rich visuals remain tied to the landing page implementation; future page expansion may warrant extracting visual components.
+- **Affected paths:** `src/App.tsx`, `src/styles.css`, `src/App.test.tsx`.
+- **Related notes:** [[../architecture/overview|Architecture]], [[../architecture/feature-map|Feature Map]], [[../features/index|Features]].
+

@@ -2,10 +2,11 @@
 
 ## Implemented Features
 
-- Modern responsive FlowAI landing page with dark blue/violet/cyan visual direction.
-- Semantic sections: header/nav/npm link, hero with CTA and workflow visual, benefits, workflow sequence, package comparison, installation terminal blocks, operational principles, final CTA, and MIT/npm footer.
+- Modern responsive FlowAI landing page with warm mustard/gold/amber/cream/black academic workshop visual direction.
+- Semantic sections: header/nav/npm link, hero with CTA and abstract study-room/workflow visual, benefits, animated workflow sequence, package comparison, installation terminal blocks, operational principles, final CTA, and MIT/npm footer.
 - Functional copy buttons for the complete and portable installation command blocks, including manual-copy guidance when Clipboard API support is unavailable or writing fails.
-- Accessibility-oriented structure with landmarks, semantic lists for workflow visuals, labeled navigation/groups, keyboard focus styles, live copy status, contrast-conscious colors, and reduced-motion handling.
+- FlowAI-specific visuals cover workflow diagram, abstract stage seals, agent connection patterns, Obsidian memory representation, records/evidence/checkpoints, and terminal states (`READING_RULES`, `PLANNING`, `IMPLEMENTING`, `VALIDATING`, `UPDATING_MEMORY`, `COMPLETED`).
+- Accessibility-oriented structure with landmarks, semantic lists for workflow visuals, labeled navigation/groups, keyboard focus styles, live copy status, contrast-conscious colors, reduced-motion handling, and a decorative cursor disabled for touch/reduced-motion contexts.
 
 ## Important Flows
 

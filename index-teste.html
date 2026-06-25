@@ -1,0 +1,3529 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FlowAI — Engenharia com agentes, sem improviso.</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,300;1,9..144,400;1,9..144,500&family=JetBrains+Mono:wght@300;400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              bg: "#0d0a06",
+              bg2: "#14100a",
+              bg3: "#1a140d",
+              ink: "#e8dcc0",
+              inkdim: "#b8a888",
+              inkmute: "#7a6b54",
+              mustard: "#c8922a",
+              gold: "#d4af6a",
+              amber: "#c9852a",
+              brown: "#2a1f15",
+              brownlt: "#3a2a1a",
+            },
+            fontFamily: {
+              serif: ["Fraunces", "serif"],
+              mono: ['"JetBrains Mono"', "monospace"],
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      :root {
+        --bg: #0d0a06;
+        --bg2: #14100a;
+        --bg3: #1a140d;
+        --ink: #e8dcc0;
+        --ink-dim: #b8a888;
+        --ink-mute: #7a6b54;
+        --mustard: #c8922a;
+        --gold: #d4af6a;
+        --amber: #c9852a;
+        --brown: #2a1f15;
+        --brown-lt: #3a2a1a;
+        --line: rgba(212, 175, 106, 0.18);
+        --line-strong: rgba(212, 175, 106, 0.4);
+      }
+
+      * {
+        cursor: none;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        background: var(--bg);
+        color: var(--ink);
+        font-family: "Fraunces", serif;
+        font-weight: 350;
+        overflow-x: hidden;
+        -webkit-font-smoothing: antialiased;
+        background-image:
+          radial-gradient(
+            ellipse 80% 50% at 50% -10%,
+            rgba(200, 146, 42, 0.1),
+            transparent 60%
+          ),
+          radial-gradient(
+            ellipse 60% 40% at 90% 50%,
+            rgba(184, 115, 42, 0.06),
+            transparent 60%
+          ),
+          radial-gradient(
+            ellipse 50% 30% at 10% 90%,
+            rgba(212, 175, 106, 0.05),
+            transparent 60%
+          );
+      }
+
+      .grain {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        z-index: 100;
+        opacity: 0.07;
+        mix-blend-mode: overlay;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      }
+
+      /* Cursor ° */
+      .cursor-dot {
+        position: fixed;
+        width: 5px;
+        height: 5px;
+        background: var(--gold);
+        border-radius: 50%;
+        pointer-events: none;
+        z-index: 9999;
+        transform: translate(-50%, -50%);
+        transition:
+          width 0.25s ease,
+          height 0.25s ease,
+          background 0.25s ease;
+        box-shadow: 0 0 10px rgba(212, 175, 106, 0.7);
+      }
+      .cursor-ring {
+        position: fixed;
+        width: 28px;
+        height: 28px;
+        border: 1px solid rgba(212, 175, 106, 0.5);
+        border-radius: 50%;
+        pointer-events: none;
+        z-index: 9998;
+        transform: translate(-50%, -50%);
+        transition:
+          width 0.35s cubic-bezier(0.2, 0.9, 0.3, 1),
+          height 0.35s cubic-bezier(0.2, 0.9, 0.3, 1),
+          border-color 0.3s,
+          opacity 0.3s;
+      }
+      .cursor-dot.active {
+        width: 7px;
+        height: 7px;
+        background: var(--mustard);
+      }
+      .cursor-ring.active {
+        width: 52px;
+        height: 52px;
+        border-color: rgba(200, 146, 42, 0.7);
+      }
+
+      @media (hover: none), (pointer: coarse) {
+        .cursor-dot,
+        .cursor-ring {
+          display: none !important;
+        }
+        * {
+          cursor: auto !important;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation-duration: 0.01ms !important;
+          transition-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+        }
+        .cursor-dot,
+        .cursor-ring {
+          display: none !important;
+        }
+        * {
+          cursor: auto !important;
+        }
+      }
+
+      .serif {
+        font-family: "Fraunces", serif;
+      }
+      .mono {
+        font-family: "JetBrains Mono", monospace;
+      }
+
+      .title-display {
+        font-family: "Fraunces", serif;
+        font-weight: 400;
+        font-variation-settings:
+          "opsz" 144,
+          "SOFT" 0;
+        letter-spacing: -0.025em;
+        line-height: 0.95;
+      }
+
+      .label-mono {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 11px;
+        font-weight: 400;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--ink-mute);
+      }
+
+      .hairline {
+        background: linear-gradient(
+          90deg,
+          transparent,
+          var(--line-strong),
+          transparent
+        );
+        height: 1px;
+      }
+      .hairline-v {
+        background: linear-gradient(
+          180deg,
+          transparent,
+          var(--line-strong) 8%,
+          var(--line-strong) 92%,
+          transparent
+        );
+        width: 1px;
+      }
+
+      .pulse-glow {
+        fill: var(--gold);
+        filter: drop-shadow(0 0 5px rgba(212, 175, 106, 0.9));
+      }
+
+      .btn-primary {
+        position: relative;
+        background: var(--gold);
+        color: var(--bg);
+        font-family: "JetBrains Mono", monospace;
+        font-size: 13px;
+        font-weight: 500;
+        letter-spacing: 0.05em;
+        padding: 14px 26px;
+        border: none;
+        overflow: hidden;
+        transition: color 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .btn-primary::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: var(--ink);
+        transform: translateY(101%);
+        transition: transform 0.45s cubic-bezier(0.2, 0.9, 0.3, 1);
+        z-index: 0;
+      }
+      .btn-primary:hover::before {
+        transform: translateY(0);
+      }
+      .btn-primary > * {
+        position: relative;
+        z-index: 1;
+      }
+
+      .btn-secondary {
+        background: transparent;
+        color: var(--ink);
+        font-family: "JetBrains Mono", monospace;
+        font-size: 13px;
+        font-weight: 400;
+        letter-spacing: 0.05em;
+        padding: 14px 26px;
+        border: 1px solid var(--line-strong);
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .btn-secondary:hover {
+        border-color: var(--gold);
+        color: var(--gold);
+      }
+
+      .ambient-dot {
+        position: absolute;
+        border-radius: 50%;
+        pointer-events: none;
+        filter: blur(60px);
+        opacity: 0.6;
+      }
+
+      .reveal {
+        opacity: 0;
+        transform: translateY(28px);
+        transition:
+          opacity 1s ease,
+          transform 1s cubic-bezier(0.2, 0.9, 0.3, 1);
+      }
+      .reveal.visible {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      *:focus-visible {
+        outline: 2px solid var(--gold);
+        outline-offset: 4px;
+      }
+
+      .terminal {
+        background: #08060be0;
+        border: 1px solid rgba(212, 175, 106, 0.22);
+        font-family: "JetBrains Mono", monospace;
+        font-size: 13px;
+        line-height: 1.75;
+        box-shadow:
+          0 0 0 1px rgba(212, 175, 106, 0.04),
+          0 40px 80px -30px rgba(0, 0, 0, 0.7),
+          inset 0 1px 0 rgba(212, 175, 106, 0.06);
+        backdrop-filter: blur(8px);
+      }
+
+      ::selection {
+        background: rgba(212, 175, 106, 0.3);
+        color: var(--ink);
+      }
+
+      @keyframes pulseFlow {
+        0% {
+          offset-distance: 0%;
+          opacity: 0;
+        }
+        8% {
+          opacity: 1;
+        }
+        92% {
+          opacity: 1;
+        }
+        100% {
+          offset-distance: 100%;
+          opacity: 0;
+        }
+      }
+      @keyframes drawLine {
+        from {
+          stroke-dashoffset: 800;
+        }
+        to {
+          stroke-dashoffset: 0;
+        }
+      }
+      .workflow-path {
+        stroke-dasharray: 800;
+        stroke-dashoffset: 800;
+        animation: drawLine 2.5s ease-out forwards;
+      }
+
+      @keyframes nodeBreathe {
+        0%,
+        100% {
+          opacity: 0.5;
+          transform: scale(1);
+        }
+        50% {
+          opacity: 1;
+          transform: scale(1.06);
+        }
+      }
+      .node-breathe {
+        transform-origin: center;
+        transform-box: fill-box;
+        animation: nodeBreathe 4s ease-in-out infinite;
+      }
+
+      .ulink {
+        position: relative;
+        color: var(--ink-dim);
+        text-decoration: none;
+        transition: color 0.3s;
+      }
+      .ulink::after {
+        content: "";
+        position: absolute;
+        bottom: -3px;
+        left: 0;
+        width: 100%;
+        height: 1px;
+        background: var(--gold);
+        transform: scaleX(0);
+        transform-origin: right;
+        transition: transform 0.4s cubic-bezier(0.2, 0.9, 0.3, 1);
+      }
+      .ulink:hover {
+        color: var(--gold);
+      }
+      .ulink:hover::after {
+        transform: scaleX(1);
+        transform-origin: left;
+      }
+
+      @keyframes float {
+        0%,
+        100% {
+          transform: translate(0, 0);
+        }
+        50% {
+          transform: translate(20px, -20px);
+        }
+      }
+      .float-slow {
+        animation: float 14s ease-in-out infinite;
+      }
+
+      @keyframes heroIn {
+        from {
+          opacity: 0;
+          transform: translateY(22px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .hero-in {
+        animation: heroIn 1.1s cubic-bezier(0.2, 0.9, 0.3, 1) forwards;
+        opacity: 0;
+      }
+
+      ::-webkit-scrollbar {
+        width: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: var(--bg);
+      }
+      ::-webkit-scrollbar-thumb {
+        background: var(--brown-lt);
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: var(--ink-mute);
+      }
+
+      .agent-symbol {
+        transition: transform 0.6s cubic-bezier(0.2, 0.9, 0.3, 1);
+        transform-origin: center;
+        transform-box: fill-box;
+      }
+      .agent-card:hover .agent-symbol {
+        transform: rotate(20deg) scale(1.08);
+      }
+
+      @keyframes memNodePulse {
+        0%,
+        100% {
+          opacity: 0.5;
+          r: 3;
+        }
+        50% {
+          opacity: 1;
+          r: 5;
+        }
+      }
+      .mem-pulse {
+        animation: memNodePulse 4s ease-in-out infinite;
+      }
+
+      .blink::after {
+        content: "▌";
+        color: var(--gold);
+        animation: blink 1s steps(2) infinite;
+        margin-left: 2px;
+      }
+      @keyframes blink {
+        50% {
+          opacity: 0;
+        }
+      }
+
+      .copy-btn {
+        transition: all 0.3s ease;
+      }
+      .copy-btn:hover {
+        color: var(--gold);
+        border-color: var(--gold);
+      }
+      .copy-btn.copied {
+        color: var(--mustard);
+        border-color: var(--mustard);
+      }
+
+      /* Subtle vignette */
+      .vignette::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: radial-gradient(
+          ellipse at center,
+          transparent 50%,
+          rgba(0, 0, 0, 0.4) 100%
+        );
+      }
+
+      /* Wood-like texture for distribution cards */
+      .artifact {
+        background:
+          linear-gradient(180deg, rgba(212, 175, 106, 0.03), transparent 30%),
+          linear-gradient(135deg, #1a140d 0%, #14100a 100%);
+        border: 1px solid var(--line);
+        position: relative;
+        overflow: hidden;
+      }
+      .artifact::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        opacity: 0.4;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.4'/%3E%3C/svg%3E");
+        mix-blend-mode: overlay;
+      }
+
+      /* Soft inner glow on hero nodes */
+      .node-active {
+        filter: drop-shadow(0 0 8px rgba(212, 175, 106, 0.4));
+      }
+    </style>
+  </head>
+  <body class="relative">
+    <div class="grain"></div>
+    <div class="cursor-dot" id="cursorDot"></div>
+    <div class="cursor-ring" id="cursorRing"></div>
+
+    <!-- Ambient warm lights -->
+    <div
+      class="ambient-dot float-slow"
+      style="
+        top: 8%;
+        left: 3%;
+        width: 280px;
+        height: 280px;
+        background: rgba(200, 146, 42, 0.18);
+      "
+    ></div>
+    <div
+      class="ambient-dot float-slow"
+      style="
+        top: 55%;
+        right: 0%;
+        width: 320px;
+        height: 320px;
+        background: rgba(184, 115, 42, 0.12);
+        animation-delay: -5s;
+      "
+    ></div>
+    <div
+      class="ambient-dot float-slow"
+      style="
+        top: 130%;
+        left: 25%;
+        width: 240px;
+        height: 240px;
+        background: rgba(212, 175, 106, 0.1);
+        animation-delay: -9s;
+      "
+    ></div>
+    <div
+      class="ambient-dot float-slow"
+      style="
+        top: 220%;
+        right: 15%;
+        width: 300px;
+        height: 300px;
+        background: rgba(200, 146, 42, 0.1);
+        animation-delay: -3s;
+      "
+    ></div>
+
+    <!-- NAV -->
+    <nav
+      class="fixed top-0 left-0 right-0 z-50 px-6 lg:px-12 py-5 backdrop-blur-md"
+      style="
+        background: rgba(13, 10, 6, 0.7);
+        border-bottom: 1px solid var(--line);
+      "
+    >
+      <div class="max-w-[1440px] mx-auto flex items-center justify-between">
+        <a href="#" class="flex items-center gap-3 group" data-cursor="active">
+          <svg
+            width="30"
+            height="30"
+            viewBox="0 0 30 30"
+            class="transition-transform duration-700 group-hover:rotate-180"
+          >
+            <circle
+              cx="15"
+              cy="15"
+              r="13"
+              fill="none"
+              stroke="#d4af6a"
+              stroke-width="0.8"
+              opacity="0.35"
+            />
+            <circle
+              cx="15"
+              cy="15"
+              r="8.5"
+              fill="none"
+              stroke="#d4af6a"
+              stroke-width="0.8"
+              opacity="0.7"
+            />
+            <circle cx="15" cy="15" r="3" fill="#d4af6a" />
+          </svg>
+          <span class="serif text-xl font-medium tracking-tight">FlowAI</span>
+        </a>
+
+        <div class="hidden lg:flex items-center gap-9 mono text-xs">
+          <a href="#manifesto" class="ulink" data-cursor="active">Manifesto</a>
+          <a href="#workflow" class="ulink" data-cursor="active">Workflow</a>
+          <a href="#agentes" class="ulink" data-cursor="active">Agentes</a>
+          <a href="#distribuicoes" class="ulink" data-cursor="active"
+            >Pacotes</a
+          >
+          <a href="#memoria" class="ulink" data-cursor="active">Memória</a>
+        </div>
+
+        <a
+          href="https://www.npmjs.com/package/@mvoikolesco/flowai"
+          target="_blank"
+          rel="noopener"
+          class="mono text-xs flex items-center gap-2 px-4 py-2 border transition-colors hover:border-[var(--gold)] hover:text-[var(--gold)]"
+          style="border-color: var(--line-strong)"
+          data-cursor="active"
+        >
+          <span style="color: var(--gold)">°</span> npm
+        </a>
+      </div>
+    </nav>
+
+    <!-- HERO -->
+    <section class="relative min-h-screen pt-32 pb-24 px-6 lg:px-12">
+      <div class="max-w-[1440px] mx-auto">
+        <div
+          class="hero-in flex items-center gap-4 mb-12"
+          style="animation-delay: 0.1s"
+        >
+          <div class="hairline w-12"></div>
+          <span class="label-mono"
+            >Biblioteca de orquestração · MIT · v1.0</span
+          >
+          <div class="hairline flex-1 max-w-[200px]"></div>
+        </div>
+
+        <div class="grid lg:grid-cols-12 gap-10 lg:gap-16 items-start">
+          <div class="lg:col-span-7">
+            <h1
+              class="title-display text-[3rem] sm:text-6xl lg:text-7xl xl:text-[5.5rem] mb-8 hero-in"
+              style="animation-delay: 0.2s"
+            >
+              Engenharia com<br />
+              <span style="font-style: italic; color: var(--gold)">agentes</span
+              >,<br />
+              sem <span style="font-weight: 300">improviso.</span>
+            </h1>
+
+            <p
+              class="serif text-lg md:text-xl leading-relaxed max-w-xl mb-10 hero-in"
+              style="
+                color: var(--ink-dim);
+                animation-delay: 0.4s;
+                font-weight: 350;
+              "
+            >
+              O FlowAI transforma solicitações em
+              <em style="color: var(--ink); font-style: italic"
+                >workflows estruturados</em
+              >
+              de planejamento, implementação, validação e memória.
+            </p>
+
+            <div
+              class="flex flex-wrap gap-3 hero-in"
+              style="animation-delay: 0.6s"
+            >
+              <a href="#workflow" class="btn-primary" data-cursor="active">
+                <span>Explorar o FlowAI</span>
+                <span>→</span>
+              </a>
+              <a
+                href="https://www.npmjs.com/package/@mvoikolesco/flowai"
+                target="_blank"
+                rel="noopener"
+                class="btn-secondary"
+                data-cursor="active"
+              >
+                Ver no npm
+              </a>
+            </div>
+          </div>
+
+          <div
+            class="lg:col-span-5 lg:pt-6 hero-in"
+            style="animation-delay: 0.8s"
+          >
+            <div class="border-l pl-6" style="border-color: var(--line-strong)">
+              <div class="label-mono mb-5">índice · workflow</div>
+              <ol
+                class="space-y-3 serif text-base"
+                style="color: var(--ink-dim)"
+              >
+                <li class="flex items-baseline gap-4">
+                  <span class="mono text-xs" style="color: var(--gold)"
+                    >01°</span
+                  ><span>Solicitação</span
+                  ><span
+                    class="ml-auto mono text-[10px]"
+                    style="color: var(--ink-mute)"
+                    >entry</span
+                  >
+                </li>
+                <li class="flex items-baseline gap-4">
+                  <span class="mono text-xs" style="color: var(--gold)"
+                    >02°</span
+                  ><span>Classificação</span
+                  ><span
+                    class="ml-auto mono text-[10px]"
+                    style="color: var(--ink-mute)"
+                    >triage</span
+                  >
+                </li>
+                <li class="flex items-baseline gap-4">
+                  <span class="mono text-xs" style="color: var(--gold)"
+                    >03°</span
+                  ><span>Planejamento</span
+                  ><span
+                    class="ml-auto mono text-[10px]"
+                    style="color: var(--ink-mute)"
+                    >plan</span
+                  >
+                </li>
+                <li class="flex items-baseline gap-4">
+                  <span class="mono text-xs" style="color: var(--gold)"
+                    >04°</span
+                  ><span>Implementação</span
+                  ><span
+                    class="ml-auto mono text-[10px]"
+                    style="color: var(--ink-mute)"
+                    >build</span
+                  >
+                </li>
+                <li class="flex items-baseline gap-4">
+                  <span class="mono text-xs" style="color: var(--gold)"
+                    >05°</span
+                  ><span>Validação</span
+                  ><span
+                    class="ml-auto mono text-[10px]"
+                    style="color: var(--ink-mute)"
+                    >verify</span
+                  >
+                </li>
+                <li class="flex items-baseline gap-4">
+                  <span class="mono text-xs" style="color: var(--mustard)"
+                    >06°</span
+                  ><span style="color: var(--ink)">Memória</span
+                  ><span
+                    class="ml-auto mono text-[10px]"
+                    style="color: var(--gold)"
+                    >durable</span
+                  >
+                </li>
+              </ol>
+              <div class="hairline mt-6 mb-4"></div>
+              <p
+                class="mono text-[11px] leading-relaxed"
+                style="color: var(--ink-mute)"
+              >
+                Cada solicitação percorre seis estágios<br />conectados por
+                linhas, evidências e contexto.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Workflow visualization -->
+        <div class="mt-20 lg:mt-28 hero-in" style="animation-delay: 1s">
+          <div class="flex items-center justify-between mb-8 flex-wrap gap-2">
+            <span class="label-mono"
+              >motor de workflow · representação viva</span
+            >
+            <span class="label-mono">6 estágios · ciclo contínuo</span>
+          </div>
+
+          <!-- Desktop SVG -->
+          <div class="hidden md:block relative">
+            <svg
+              viewBox="0 0 1200 280"
+              class="w-full"
+              preserveAspectRatio="xMidYMid meet"
+            >
+              <defs>
+                <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stop-color="#c8922a" stop-opacity="0.15" />
+                  <stop offset="50%" stop-color="#d4af6a" stop-opacity="0.7" />
+                  <stop
+                    offset="100%"
+                    stop-color="#c8922a"
+                    stop-opacity="0.15"
+                  />
+                </linearGradient>
+                <radialGradient id="nodeGlow">
+                  <stop offset="0%" stop-color="#d4af6a" stop-opacity="0.5" />
+                  <stop offset="100%" stop-color="#d4af6a" stop-opacity="0" />
+                </radialGradient>
+              </defs>
+
+              <path
+                id="p1"
+                d="M 90 170 Q 190 90, 290 110"
+                stroke="url(#goldGrad)"
+                stroke-width="1.3"
+                fill="none"
+                class="workflow-path"
+              />
+              <path
+                id="p2"
+                d="M 290 110 Q 390 210, 490 190"
+                stroke="url(#goldGrad)"
+                stroke-width="1.3"
+                fill="none"
+                class="workflow-path"
+                style="animation-delay: 0.3s"
+              />
+              <path
+                id="p3"
+                d="M 490 190 Q 590 90, 690 120"
+                stroke="url(#goldGrad)"
+                stroke-width="1.3"
+                fill="none"
+                class="workflow-path"
+                style="animation-delay: 0.6s"
+              />
+              <path
+                id="p4"
+                d="M 690 120 Q 790 220, 890 180"
+                stroke="url(#goldGrad)"
+                stroke-width="1.3"
+                fill="none"
+                class="workflow-path"
+                style="animation-delay: 0.9s"
+              />
+              <path
+                id="p5"
+                d="M 890 180 Q 990 90, 1090 120"
+                stroke="url(#goldGrad)"
+                stroke-width="1.3"
+                fill="none"
+                class="workflow-path"
+                style="animation-delay: 1.2s"
+              />
+
+              <circle r="3.5" class="pulse-glow">
+                <animateMotion
+                  dur="3.5s"
+                  repeatCount="indefinite"
+                  path="M 90 170 Q 190 90, 290 110"
+                />
+              </circle>
+              <circle r="3.5" class="pulse-glow">
+                <animateMotion
+                  dur="3.5s"
+                  repeatCount="indefinite"
+                  begin="0.7s"
+                  path="M 290 110 Q 390 210, 490 190"
+                />
+              </circle>
+              <circle r="3.5" class="pulse-glow">
+                <animateMotion
+                  dur="3.5s"
+                  repeatCount="indefinite"
+                  begin="1.4s"
+                  path="M 490 190 Q 590 90, 690 120"
+                />
+              </circle>
+              <circle r="3.5" class="pulse-glow">
+                <animateMotion
+                  dur="3.5s"
+                  repeatCount="indefinite"
+                  begin="2.1s"
+                  path="M 690 120 Q 790 220, 890 180"
+                />
+              </circle>
+              <circle r="3.5" class="pulse-glow">
+                <animateMotion
+                  dur="3.5s"
+                  repeatCount="indefinite"
+                  begin="2.8s"
+                  path="M 890 180 Q 990 90, 1090 120"
+                />
+              </circle>
+
+              <!-- Nodes -->
+              <g transform="translate(90, 170)" class="node-active">
+                <circle r="42" fill="url(#nodeGlow)" />
+                <circle
+                  r="26"
+                  fill="none"
+                  stroke="rgba(212,175,106,0.2)"
+                  stroke-width="0.8"
+                />
+                <circle
+                  r="18"
+                  fill="rgba(212,175,106,0.06)"
+                  stroke="#d4af6a"
+                  stroke-width="1.4"
+                />
+                <circle r="3" fill="#d4af6a" class="node-breathe" />
+                <text
+                  y="58"
+                  text-anchor="middle"
+                  fill="#b8a888"
+                  font-family="JetBrains Mono"
+                  font-size="10"
+                  letter-spacing="1.5"
+                >
+                  SOLICITAÇÃO
+                </text>
+                <text
+                  y="73"
+                  text-anchor="middle"
+                  fill="#7a6b54"
+                  font-family="JetBrains Mono"
+                  font-size="9"
+                >
+                  01°
+                </text>
+              </g>
+              <g transform="translate(290, 110)" class="node-active">
+                <circle r="42" fill="url(#nodeGlow)" />
+                <circle
+                  r="26"
+                  fill="none"
+                  stroke="rgba(212,175,106,0.2)"
+                  stroke-width="0.8"
+                />
+                <circle
+                  r="18"
+                  fill="rgba(212,175,106,0.08)"
+                  stroke="#d4af6a"
+                  stroke-width="1.4"
+                />
+                <circle
+                  r="3"
+                  fill="#d4af6a"
+                  class="node-breathe"
+                  style="animation-delay: -0.6s"
+                />
+                <text
+                  y="58"
+                  text-anchor="middle"
+                  fill="#b8a888"
+                  font-family="JetBrains Mono"
+                  font-size="10"
+                  letter-spacing="1.5"
+                >
+                  CLASSIFICAÇÃO
+                </text>
+                <text
+                  y="73"
+                  text-anchor="middle"
+                  fill="#7a6b54"
+                  font-family="JetBrains Mono"
+                  font-size="9"
+                >
+                  02°
+                </text>
+              </g>
+              <g transform="translate(490, 190)" class="node-active">
+                <circle r="42" fill="url(#nodeGlow)" />
+                <circle
+                  r="26"
+                  fill="none"
+                  stroke="rgba(212,175,106,0.2)"
+                  stroke-width="0.8"
+                />
+                <circle
+                  r="18"
+                  fill="rgba(212,175,106,0.06)"
+                  stroke="#d4af6a"
+                  stroke-width="1.4"
+                />
+                <circle
+                  r="3"
+                  fill="#d4af6a"
+                  class="node-breathe"
+                  style="animation-delay: -1.2s"
+                />
+                <text
+                  y="58"
+                  text-anchor="middle"
+                  fill="#b8a888"
+                  font-family="JetBrains Mono"
+                  font-size="10"
+                  letter-spacing="1.5"
+                >
+                  PLANEJAMENTO
+                </text>
+                <text
+                  y="73"
+                  text-anchor="middle"
+                  fill="#7a6b54"
+                  font-family="JetBrains Mono"
+                  font-size="9"
+                >
+                  03°
+                </text>
+              </g>
+              <g transform="translate(690, 120)" class="node-active">
+                <circle r="42" fill="url(#nodeGlow)" />
+                <circle
+                  r="26"
+                  fill="none"
+                  stroke="rgba(212,175,106,0.2)"
+                  stroke-width="0.8"
+                />
+                <circle
+                  r="18"
+                  fill="rgba(212,175,106,0.08)"
+                  stroke="#d4af6a"
+                  stroke-width="1.4"
+                />
+                <circle
+                  r="3"
+                  fill="#d4af6a"
+                  class="node-breathe"
+                  style="animation-delay: -1.8s"
+                />
+                <text
+                  y="58"
+                  text-anchor="middle"
+                  fill="#b8a888"
+                  font-family="JetBrains Mono"
+                  font-size="10"
+                  letter-spacing="1.5"
+                >
+                  IMPLEMENTAÇÃO
+                </text>
+                <text
+                  y="73"
+                  text-anchor="middle"
+                  fill="#7a6b54"
+                  font-family="JetBrains Mono"
+                  font-size="9"
+                >
+                  04°
+                </text>
+              </g>
+              <g transform="translate(890, 180)" class="node-active">
+                <circle r="42" fill="url(#nodeGlow)" />
+                <circle
+                  r="26"
+                  fill="none"
+                  stroke="rgba(212,175,106,0.2)"
+                  stroke-width="0.8"
+                />
+                <circle
+                  r="18"
+                  fill="rgba(212,175,106,0.06)"
+                  stroke="#d4af6a"
+                  stroke-width="1.4"
+                />
+                <circle
+                  r="3"
+                  fill="#d4af6a"
+                  class="node-breathe"
+                  style="animation-delay: -2.4s"
+                />
+                <text
+                  y="58"
+                  text-anchor="middle"
+                  fill="#b8a888"
+                  font-family="JetBrains Mono"
+                  font-size="10"
+                  letter-spacing="1.5"
+                >
+                  VALIDAÇÃO
+                </text>
+                <text
+                  y="73"
+                  text-anchor="middle"
+                  fill="#7a6b54"
+                  font-family="JetBrains Mono"
+                  font-size="9"
+                >
+                  05°
+                </text>
+              </g>
+              <g transform="translate(1090, 120)" class="node-active">
+                <circle r="42" fill="url(#nodeGlow)" />
+                <circle
+                  r="26"
+                  fill="none"
+                  stroke="rgba(212,175,106,0.2)"
+                  stroke-width="0.8"
+                />
+                <circle
+                  r="18"
+                  fill="rgba(212,175,106,0.14)"
+                  stroke="#c8922a"
+                  stroke-width="1.6"
+                />
+                <circle
+                  r="4"
+                  fill="#c8922a"
+                  class="node-breathe"
+                  style="animation-delay: -3s"
+                />
+                <text
+                  y="58"
+                  text-anchor="middle"
+                  fill="#d4af6a"
+                  font-family="JetBrains Mono"
+                  font-size="10"
+                  letter-spacing="1.5"
+                >
+                  MEMÓRIA
+                </text>
+                <text
+                  y="73"
+                  text-anchor="middle"
+                  fill="#7a6b54"
+                  font-family="JetBrains Mono"
+                  font-size="9"
+                >
+                  06°
+                </text>
+              </g>
+            </svg>
+          </div>
+
+          <!-- Mobile vertical -->
+          <div class="md:hidden relative pl-10">
+            <div class="absolute left-[18px] top-3 bottom-3 hairline-v"></div>
+            <div class="space-y-7">
+              <div class="relative flex items-center gap-4">
+                <div
+                  class="absolute -left-[22px] w-3 h-3 rounded-full border"
+                  style="background: var(--bg); border-color: var(--gold)"
+                ></div>
+                <span class="mono text-[10px]" style="color: var(--gold)"
+                  >01°</span
+                >
+                <span class="serif">Solicitação</span>
+              </div>
+              <div class="relative flex items-center gap-4">
+                <div
+                  class="absolute -left-[22px] w-3 h-3 rounded-full border"
+                  style="background: var(--bg); border-color: var(--gold)"
+                ></div>
+                <span class="mono text-[10px]" style="color: var(--gold)"
+                  >02°</span
+                >
+                <span class="serif">Classificação</span>
+              </div>
+              <div class="relative flex items-center gap-4">
+                <div
+                  class="absolute -left-[22px] w-3 h-3 rounded-full border"
+                  style="background: var(--bg); border-color: var(--gold)"
+                ></div>
+                <span class="mono text-[10px]" style="color: var(--gold)"
+                  >03°</span
+                >
+                <span class="serif">Planejamento</span>
+              </div>
+              <div class="relative flex items-center gap-4">
+                <div
+                  class="absolute -left-[22px] w-3 h-3 rounded-full border"
+                  style="background: var(--bg); border-color: var(--gold)"
+                ></div>
+                <span class="mono text-[10px]" style="color: var(--gold)"
+                  >04°</span
+                >
+                <span class="serif">Implementação</span>
+              </div>
+              <div class="relative flex items-center gap-4">
+                <div
+                  class="absolute -left-[22px] w-3 h-3 rounded-full border"
+                  style="background: var(--bg); border-color: var(--gold)"
+                ></div>
+                <span class="mono text-[10px]" style="color: var(--gold)"
+                  >05°</span
+                >
+                <span class="serif">Validação</span>
+              </div>
+              <div class="relative flex items-center gap-4">
+                <div
+                  class="absolute -left-[22px] w-3 h-3 rounded-full"
+                  style="background: var(--mustard)"
+                ></div>
+                <span class="mono text-[10px]" style="color: var(--mustard)"
+                  >06°</span
+                >
+                <span class="serif" style="color: var(--gold)">Memória</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- MANIFESTO -->
+    <section id="manifesto" class="relative px-6 lg:px-12 py-32 lg:py-48">
+      <div class="max-w-[1440px] mx-auto">
+        <div class="grid lg:grid-cols-12 gap-10 lg:gap-16">
+          <div class="lg:col-span-4 reveal">
+            <div class="sticky top-32">
+              <div class="flex items-center gap-3 mb-6">
+                <span class="sec-num mono text-xs" style="color: var(--gold)"
+                  >§ I</span
+                >
+                <div class="hairline w-10"></div>
+                <span class="label-mono">manifesto</span>
+              </div>
+              <h2 class="title-display text-4xl md:text-5xl lg:text-6xl mb-8">
+                Agentes rápidos ainda precisam de
+                <em style="color: var(--gold); font-style: italic"
+                  >processos confiáveis</em
+                >.
+              </h2>
+              <p
+                class="serif text-base leading-relaxed"
+                style="color: var(--ink-dim)"
+              >
+                Velocidade sem método é ruído. O FlowAI é uma biblioteca de
+                princípios operacionais que se manifestam como etapas, agentes e
+                registros — para que autonomia não vire abandono.
+              </p>
+            </div>
+          </div>
+
+          <div class="lg:col-span-8 reveal">
+            <ol class="space-y-0">
+              <li
+                class="grid grid-cols-12 gap-4 lg:gap-8 py-7 border-t"
+                style="border-color: var(--line)"
+              >
+                <span class="col-span-2 mono text-sm" style="color: var(--gold)"
+                  >01°</span
+                >
+                <div class="col-span-10">
+                  <h3
+                    class="serif text-2xl lg:text-3xl mb-2"
+                    style="font-weight: 400"
+                  >
+                    Entender antes de editar.
+                  </h3>
+                  <p
+                    class="serif text-base leading-relaxed"
+                    style="color: var(--ink-dim)"
+                  >
+                    Toda solicitação é classificada por intenção, escopo e
+                    contexto antes de qualquer linha ser tocada.
+                  </p>
+                </div>
+              </li>
+              <li
+                class="grid grid-cols-12 gap-4 lg:gap-8 py-7 border-t"
+                style="border-color: var(--line)"
+              >
+                <span class="col-span-2 mono text-sm" style="color: var(--gold)"
+                  >02°</span
+                >
+                <div class="col-span-10">
+                  <h3
+                    class="serif text-2xl lg:text-3xl mb-2"
+                    style="font-weight: 400"
+                  >
+                    Planejar antes de implementar.
+                  </h3>
+                  <p
+                    class="serif text-base leading-relaxed"
+                    style="color: var(--ink-dim)"
+                  >
+                    Um plano explícito substitui adivinhações. Etapas, arquivos
+                    afetados e riscos são nomeados antes da execução.
+                  </p>
+                </div>
+              </li>
+              <li
+                class="grid grid-cols-12 gap-4 lg:gap-8 py-7 border-t"
+                style="border-color: var(--line)"
+              >
+                <span class="col-span-2 mono text-sm" style="color: var(--gold)"
+                  >03°</span
+                >
+                <div class="col-span-10">
+                  <h3
+                    class="serif text-2xl lg:text-3xl mb-2"
+                    style="font-weight: 400"
+                  >
+                    Preservar o trabalho existente.
+                  </h3>
+                  <p
+                    class="serif text-base leading-relaxed"
+                    style="color: var(--ink-dim)"
+                  >
+                    O código que já funciona é patrimônio. Mudanças propõem-se
+                    sobre o que existe, nunca contra.
+                  </p>
+                </div>
+              </li>
+              <li
+                class="grid grid-cols-12 gap-4 lg:gap-8 py-7 border-t"
+                style="border-color: var(--line)"
+              >
+                <span class="col-span-2 mono text-sm" style="color: var(--gold)"
+                  >04°</span
+                >
+                <div class="col-span-10">
+                  <h3
+                    class="serif text-2xl lg:text-3xl mb-2"
+                    style="font-weight: 400"
+                  >
+                    Validar antes de declarar sucesso.
+                  </h3>
+                  <p
+                    class="serif text-base leading-relaxed"
+                    style="color: var(--ink-dim)"
+                  >
+                    Nenhuma tarefa é concluída sem evidência. Testes, compilação
+                    e critérios objetivos sustentam cada conclusão.
+                  </p>
+                </div>
+              </li>
+              <li
+                class="grid grid-cols-12 gap-4 lg:gap-8 py-7 border-t"
+                style="border-color: var(--line)"
+              >
+                <span class="col-span-2 mono text-sm" style="color: var(--gold)"
+                  >05°</span
+                >
+                <div class="col-span-10">
+                  <h3
+                    class="serif text-2xl lg:text-3xl mb-2"
+                    style="font-weight: 400"
+                  >
+                    Registrar conhecimento durável.
+                  </h3>
+                  <p
+                    class="serif text-base leading-relaxed"
+                    style="color: var(--ink-dim)"
+                  >
+                    Decisões, contextos e aprendizados são escritos em memória
+                    de projeto — acessíveis às próximas execuções.
+                  </p>
+                </div>
+              </li>
+              <li
+                class="grid grid-cols-12 gap-4 lg:gap-8 py-7 border-t border-b"
+                style="border-color: var(--line)"
+              >
+                <span
+                  class="col-span-2 mono text-sm"
+                  style="color: var(--mustard)"
+                  >06°</span
+                >
+                <div class="col-span-10">
+                  <h3
+                    class="serif text-2xl lg:text-3xl mb-2"
+                    style="font-weight: 400"
+                  >
+                    Pedir autorização antes de ações sensíveis.
+                  </h3>
+                  <p
+                    class="serif text-base leading-relaxed"
+                    style="color: var(--ink-dim)"
+                  >
+                    Operações irreversíveis passam por um portão. Autonomia não
+                    significa licença para agir sem consentimento.
+                  </p>
+                </div>
+              </li>
+            </ol>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- WORKFLOW NARRATIVO -->
+    <section id="workflow" class="relative px-6 lg:px-12 py-32 lg:py-48">
+      <div class="max-w-[1440px] mx-auto">
+        <div class="grid lg:grid-cols-12 gap-10 mb-20 reveal">
+          <div class="lg:col-span-7">
+            <div class="flex items-center gap-3 mb-6">
+              <span class="sec-num mono text-xs" style="color: var(--gold)"
+                >§ II</span
+              >
+              <div class="hairline w-10"></div>
+              <span class="label-mono">workflow · trilha narrativa</span>
+            </div>
+            <h2 class="title-display text-4xl md:text-5xl lg:text-6xl">
+              Seis estágios, uma
+              <em style="color: var(--gold); font-style: italic"
+                >trilha contínua</em
+              >.
+            </h2>
+          </div>
+          <div class="lg:col-span-5 lg:pt-4">
+            <p
+              class="serif text-base leading-relaxed"
+              style="color: var(--ink-dim)"
+            >
+              Cada solicitação entra como intenção e sai como registro. O que
+              está entre os dois é o trabalho silencioso de classificar,
+              planejar, implementar, validar e lembrar.
+            </p>
+          </div>
+        </div>
+
+        <!-- Vertical trail with alternating content -->
+        <div class="relative">
+          <!-- Central vertical line -->
+          <div
+            class="hidden lg:block absolute left-1/2 top-0 bottom-0 hairline-v -translate-x-1/2"
+          ></div>
+          <div
+            class="lg:hidden absolute left-[22px] top-0 bottom-0 hairline-v"
+          ></div>
+
+          <!-- Stage 1 -->
+          <div
+            class="reveal grid lg:grid-cols-2 gap-8 lg:gap-20 mb-16 lg:mb-24 relative"
+          >
+            <div class="hidden lg:block"></div>
+            <div class="lg:pr-0 pl-12 lg:pl-0 relative">
+              <div
+                class="absolute lg:left-0 left-[14px] top-2 -translate-x-1/2 lg:-translate-x-1/2"
+              >
+                <div class="relative">
+                  <div
+                    class="absolute inset-0 -m-3 rounded-full"
+                    style="
+                      background: radial-gradient(
+                        circle,
+                        rgba(212, 175, 106, 0.15),
+                        transparent 70%
+                      );
+                    "
+                  ></div>
+                  <div
+                    class="relative w-4 h-4 rounded-full border-2"
+                    style="background: var(--bg); border-color: var(--gold)"
+                  ></div>
+                </div>
+              </div>
+              <div class="lg:pl-8">
+                <div class="flex items-baseline gap-4 mb-3">
+                  <span class="mono text-xs" style="color: var(--gold)"
+                    >01°</span
+                  >
+                  <span class="label-mono">entry · solicitação</span>
+                </div>
+                <h3 class="title-display text-3xl lg:text-4xl mb-4">
+                  Solicitação
+                </h3>
+                <p
+                  class="serif text-base lg:text-lg leading-relaxed mb-5"
+                  style="color: var(--ink-dim)"
+                >
+                  A intenção humana entra no sistema como texto, contexto e
+                  restrições. Nada é executado ainda — apenas recebido e
+                  armazenado com fidelidade.
+                </p>
+                <div
+                  class="mono text-xs p-4 border"
+                  style="
+                    border-color: var(--line);
+                    color: var(--ink-dim);
+                    background: rgba(212, 175, 106, 0.02);
+                  "
+                >
+                  <span style="color: var(--ink-mute)">// input</span><br />
+                  <span style="color: var(--gold)">request</span> → { intent,
+                  scope, context }
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Stage 2 -->
+          <div
+            class="reveal grid lg:grid-cols-2 gap-8 lg:gap-20 mb-16 lg:mb-24 relative"
+          >
+            <div class="lg:pr-8 pl-12 lg:pl-0 relative">
+              <div
+                class="absolute lg:right-0 left-[14px] top-2 lg:translate-x-1/2 -translate-x-1/2"
+              >
+                <div class="relative">
+                  <div
+                    class="absolute inset-0 -m-3 rounded-full"
+                    style="
+                      background: radial-gradient(
+                        circle,
+                        rgba(212, 175, 106, 0.15),
+                        transparent 70%
+                      );
+                    "
+                  ></div>
+                  <div
+                    class="relative w-4 h-4 rounded-full border-2"
+                    style="background: var(--bg); border-color: var(--gold)"
+                  ></div>
+                </div>
+              </div>
+              <div class="lg:text-right">
+                <div class="flex items-baseline gap-4 mb-3 lg:justify-end">
+                  <span class="label-mono">triage · classificação</span>
+                  <span class="mono text-xs" style="color: var(--gold)"
+                    >02°</span
+                  >
+                </div>
+                <h3 class="title-display text-3xl lg:text-4xl mb-4">
+                  Classificação
+                </h3>
+                <p
+                  class="serif text-base lg:text-lg leading-relaxed mb-5"
+                  style="color: var(--ink-dim)"
+                >
+                  O Nexus examina a solicitação e a classifica: tipo de tarefa,
+                  domínio, complexidade, arquivos provavelmente envolvidos,
+                  riscos antecipados.
+                </p>
+                <div
+                  class="mono text-xs p-4 border lg:inline-block text-left"
+                  style="
+                    border-color: var(--line);
+                    color: var(--ink-dim);
+                    background: rgba(212, 175, 106, 0.02);
+                  "
+                >
+                  <span style="color: var(--ink-mute)">// classify</span><br />
+                  <span style="color: var(--gold)">type</span>: refactor ·
+                  <span style="color: var(--gold)">risk</span>: low
+                </div>
+              </div>
+            </div>
+            <div class="hidden lg:block"></div>
+          </div>
+
+          <!-- Stage 3 -->
+          <div
+            class="reveal grid lg:grid-cols-2 gap-8 lg:gap-20 mb-16 lg:mb-24 relative"
+          >
+            <div class="hidden lg:block"></div>
+            <div class="lg:pr-0 pl-12 lg:pl-0 relative">
+              <div
+                class="absolute lg:left-0 left-[14px] top-2 -translate-x-1/2 lg:-translate-x-1/2"
+              >
+                <div class="relative">
+                  <div
+                    class="absolute inset-0 -m-3 rounded-full"
+                    style="
+                      background: radial-gradient(
+                        circle,
+                        rgba(212, 175, 106, 0.15),
+                        transparent 70%
+                      );
+                    "
+                  ></div>
+                  <div
+                    class="relative w-4 h-4 rounded-full border-2"
+                    style="background: var(--bg); border-color: var(--gold)"
+                  ></div>
+                </div>
+              </div>
+              <div class="lg:pl-8">
+                <div class="flex items-baseline gap-4 mb-3">
+                  <span class="mono text-xs" style="color: var(--gold)"
+                    >03°</span
+                  >
+                  <span class="label-mono">plan · planejamento</span>
+                </div>
+                <h3 class="title-display text-3xl lg:text-4xl mb-4">
+                  Planejamento
+                </h3>
+                <p
+                  class="serif text-base lg:text-lg leading-relaxed mb-5"
+                  style="color: var(--ink-dim)"
+                >
+                  O Scout mapeia o território: arquivos a tocar, arquivos a
+                  preservar, ordem de operações, critérios de conclusão. Um
+                  plano vira objeto verificável.
+                </p>
+                <div
+                  class="mono text-xs p-4 border"
+                  style="
+                    border-color: var(--line);
+                    color: var(--ink-dim);
+                    background: rgba(212, 175, 106, 0.02);
+                  "
+                >
+                  <span style="color: var(--ink-mute)">// plan</span><br />
+                  <span style="color: var(--gold)">steps</span>: [edit, test,
+                  verify, document]
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Stage 4 -->
+          <div
+            class="reveal grid lg:grid-cols-2 gap-8 lg:gap-20 mb-16 lg:mb-24 relative"
+          >
+            <div class="lg:pr-8 pl-12 lg:pl-0 relative">
+              <div
+                class="absolute lg:right-0 left-[14px] top-2 lg:translate-x-1/2 -translate-x-1/2"
+              >
+                <div class="relative">
+                  <div
+                    class="absolute inset-0 -m-3 rounded-full"
+                    style="
+                      background: radial-gradient(
+                        circle,
+                        rgba(212, 175, 106, 0.18),
+                        transparent 70%
+                      );
+                    "
+                  ></div>
+                  <div
+                    class="relative w-4 h-4 rounded-full border-2"
+                    style="background: var(--bg); border-color: var(--gold)"
+                  ></div>
+                </div>
+              </div>
+              <div class="lg:text-right">
+                <div class="flex items-baseline gap-4 mb-3 lg:justify-end">
+                  <span class="label-mono">build · implementação</span>
+                  <span class="mono text-xs" style="color: var(--gold)"
+                    >04°</span
+                  >
+                </div>
+                <h3 class="title-display text-3xl lg:text-4xl mb-4">
+                  Implementação
+                </h3>
+                <p
+                  class="serif text-base lg:text-lg leading-relaxed mb-5"
+                  style="color: var(--ink-dim)"
+                >
+                  O Forge executa o plano em passos controlados. Cada alteração
+                  é small, revisável e reversível. Nada é feito em lote cego.
+                </p>
+                <div
+                  class="mono text-xs p-4 border lg:inline-block text-left"
+                  style="
+                    border-color: var(--line);
+                    color: var(--ink-dim);
+                    background: rgba(212, 175, 106, 0.02);
+                  "
+                >
+                  <span style="color: var(--ink-mute)">// build</span><br />
+                  <span style="color: var(--gold)">patch</span> → file.ts ·
+                  <span style="color: var(--gold)">status</span>: applied
+                </div>
+              </div>
+            </div>
+            <div class="hidden lg:block"></div>
+          </div>
+
+          <!-- Stage 5 -->
+          <div
+            class="reveal grid lg:grid-cols-2 gap-8 lg:gap-20 mb-16 lg:mb-24 relative"
+          >
+            <div class="hidden lg:block"></div>
+            <div class="lg:pr-0 pl-12 lg:pl-0 relative">
+              <div
+                class="absolute lg:left-0 left-[14px] top-2 -translate-x-1/2 lg:-translate-x-1/2"
+              >
+                <div class="relative">
+                  <div
+                    class="absolute inset-0 -m-3 rounded-full"
+                    style="
+                      background: radial-gradient(
+                        circle,
+                        rgba(212, 175, 106, 0.15),
+                        transparent 70%
+                      );
+                    "
+                  ></div>
+                  <div
+                    class="relative w-4 h-4 rounded-full border-2"
+                    style="background: var(--bg); border-color: var(--gold)"
+                  ></div>
+                </div>
+              </div>
+              <div class="lg:pl-8">
+                <div class="flex items-baseline gap-4 mb-3">
+                  <span class="mono text-xs" style="color: var(--gold)"
+                    >05°</span
+                  >
+                  <span class="label-mono">verify · validação</span>
+                </div>
+                <h3 class="title-display text-3xl lg:text-4xl mb-4">
+                  Validação
+                </h3>
+                <p
+                  class="serif text-base lg:text-lg leading-relaxed mb-5"
+                  style="color: var(--ink-dim)"
+                >
+                  O Aegis submete o trabalho a critérios objetivos: testes,
+                  tipos, compilação, lint, contratos. Sem verde, não há sucesso
+                  — há hipótese.
+                </p>
+                <div
+                  class="mono text-xs p-4 border"
+                  style="
+                    border-color: var(--line);
+                    color: var(--ink-dim);
+                    background: rgba(212, 175, 106, 0.02);
+                  "
+                >
+                  <span style="color: var(--ink-mute)">// verify</span><br />
+                  <span style="color: var(--gold)">tests</span>: 24/24 ·
+                  <span style="color: var(--gold)">types</span>: clean
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Stage 6 -->
+          <div class="reveal grid lg:grid-cols-2 gap-8 lg:gap-20 relative">
+            <div class="lg:pr-8 pl-12 lg:pl-0 relative">
+              <div
+                class="absolute lg:right-0 left-[14px] top-2 lg:translate-x-1/2 -translate-x-1/2"
+              >
+                <div class="relative">
+                  <div
+                    class="absolute inset-0 -m-4 rounded-full"
+                    style="
+                      background: radial-gradient(
+                        circle,
+                        rgba(200, 146, 42, 0.3),
+                        transparent 70%
+                      );
+                    "
+                  ></div>
+                  <div
+                    class="relative w-5 h-5 rounded-full"
+                    style="
+                      background: var(--mustard);
+                      box-shadow: 0 0 14px rgba(200, 146, 42, 0.6);
+                    "
+                  ></div>
+                </div>
+              </div>
+              <div class="lg:text-right">
+                <div class="flex items-baseline gap-4 mb-3 lg:justify-end">
+                  <span class="label-mono" style="color: var(--gold)"
+                    >durable · memória</span
+                  >
+                  <span class="mono text-xs" style="color: var(--mustard)"
+                    >06°</span
+                  >
+                </div>
+                <h3
+                  class="title-display text-3xl lg:text-4xl mb-4"
+                  style="color: var(--gold)"
+                >
+                  Memória
+                </h3>
+                <p
+                  class="serif text-base lg:text-lg leading-relaxed mb-5"
+                  style="color: var(--ink)"
+                >
+                  O Patch escreve o que foi aprendido: decisões tomadas,
+                  contextos preservados, atalhos descobertos. O projeto fica
+                  mais inteligente a cada ciclo.
+                </p>
+                <div
+                  class="mono text-xs p-4 border lg:inline-block text-left"
+                  style="
+                    border-color: var(--mustard);
+                    color: var(--ink);
+                    background: rgba(200, 146, 42, 0.05);
+                  "
+                >
+                  <span style="color: var(--gold)">// remember</span><br />
+                  <span style="color: var(--mustard)">memory</span> → AGENTS.md
+                  · <span style="color: var(--mustard)">status</span>: persisted
+                </div>
+              </div>
+            </div>
+            <div class="hidden lg:block"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SISTEMA DE AGENTES -->
+    <section id="agentes" class="relative px-6 lg:px-12 py-32 lg:py-48">
+      <div class="max-w-[1440px] mx-auto">
+        <div class="grid lg:grid-cols-12 gap-10 mb-20 reveal">
+          <div class="lg:col-span-7">
+            <div class="flex items-center gap-3 mb-6">
+              <span class="sec-num mono text-xs" style="color: var(--gold)"
+                >§ III</span
+              >
+              <div class="hairline w-10"></div>
+              <span class="label-mono">sistema de agentes</span>
+            </div>
+            <h2 class="title-display text-4xl md:text-5xl lg:text-6xl">
+              Seis especialistas,
+              <em style="color: var(--gold); font-style: italic"
+                >um mesmo sistema</em
+              >.
+            </h2>
+          </div>
+          <div class="lg:col-span-5 lg:pt-4">
+            <p
+              class="serif text-base leading-relaxed"
+              style="color: var(--ink-dim)"
+            >
+              Cada agente tem papel definido, símbolo próprio e jurisdição
+              clara. Eles se conectam por contratos explícitos — não por
+              improvisos de prompt.
+            </p>
+          </div>
+        </div>
+
+        <!-- Asymmetric agents grid -->
+        <div
+          class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-px"
+          style="background: var(--line)"
+        >
+          <!-- Nexus -->
+          <div
+            class="agent-card reveal lg:col-span-5 p-8 lg:p-12 relative"
+            style="background: var(--bg)"
+            data-cursor="active"
+          >
+            <div class="flex items-start justify-between mb-8">
+              <div>
+                <div class="label-mono mb-2">classificador</div>
+                <h3 class="title-display text-3xl lg:text-4xl">Nexus</h3>
+              </div>
+              <svg
+                width="56"
+                height="56"
+                viewBox="0 0 56 56"
+                class="agent-symbol"
+              >
+                <circle
+                  cx="28"
+                  cy="28"
+                  r="22"
+                  fill="none"
+                  stroke="#d4af6a"
+                  stroke-width="1"
+                  opacity="0.4"
+                />
+                <circle
+                  cx="28"
+                  cy="28"
+                  r="14"
+                  fill="none"
+                  stroke="#d4af6a"
+                  stroke-width="1"
+                  opacity="0.7"
+                />
+                <circle
+                  cx="28"
+                  cy="28"
+                  r="6"
+                  fill="none"
+                  stroke="#d4af6a"
+                  stroke-width="1.2"
+                />
+                <circle cx="28" cy="28" r="2" fill="#d4af6a" />
+                <line
+                  x1="28"
+                  y1="2"
+                  x2="28"
+                  y2="8"
+                  stroke="#d4af6a"
+                  stroke-width="1"
+                />
+                <line
+                  x1="28"
+                  y1="48"
+                  x2="28"
+                  y2="54"
+                  stroke="#d4af6a"
+                  stroke-width="1"
+                />
+                <line
+                  x1="2"
+                  y1="28"
+                  x2="8"
+                  y2="28"
+                  stroke="#d4af6a"
+                  stroke-width="1"
+                />
+                <line
+                  x1="48"
+                  y1="28"
+                  x2="54"
+                  y2="28"
+                  stroke="#d4af6a"
+                  stroke-width="1"
+                />
+              </svg>
+            </div>
+            <p
+              class="serif text-base leading-relaxed mb-6"
+              style="color: var(--ink-dim)"
+            >
+              Recebe a solicitação e a decompõe em tipo, escopo, risco e
+              contexto. É a porta de entrada — onde a intenção vira estrutura.
+            </p>
+            <div
+              class="mono text-[11px] flex items-center gap-2"
+              style="color: var(--ink-mute)"
+            >
+              <span style="color: var(--gold)">°</span> etapa 02 · classificação
+            </div>
+          </div>
+
+          <!-- Scout -->
+          <div
+            class="agent-card reveal lg:col-span-4 p-8 lg:p-12 relative"
+            style="background: var(--bg)"
+            data-cursor="active"
+          >
+            <div class="flex items-start justify-between mb-8">
+              <div>
+                <div class="label-mono mb-2">planejador</div>
+                <h3 class="title-display text-3xl lg:text-4xl">Scout</h3>
+              </div>
+              <svg
+                width="56"
+                height="56"
+                viewBox="0 0 56 56"
+                class="agent-symbol"
+              >
+                <path
+                  d="M 28 4 L 33 24 L 52 28 L 33 32 L 28 52 L 23 32 L 4 28 L 23 24 Z"
+                  fill="none"
+                  stroke="#d4af6a"
+                  stroke-width="1.2"
+                />
+                <circle cx="28" cy="28" r="4" fill="#d4af6a" />
+                <circle
+                  cx="28"
+                  cy="28"
+                  r="22"
+                  fill="none"
+                  stroke="#d4af6a"
+                  stroke-width="0.6"
+                  opacity="0.3"
+                />
+              </svg>
+            </div>
+            <p
+              class="serif text-base leading-relaxed mb-6"
+              style="color: var(--ink-dim)"
+            >
+              Explora o código, mapeia dependências e propõe um plano. Sua
+              função é ver antes — antecipar o caminho.
+            </p>
+            <div
+              class="mono text-[11px] flex items-center gap-2"
+              style="color: var(--ink-mute)"
+            >
+              <span style="color: var(--gold)">°</span> etapa 03 · planejamento
+            </div>
+          </div>
+
+          <!-- Gate -->
+          <div
+            class="agent-card reveal lg:col-span-3 p-8 lg:p-10 relative"
+            style="background: var(--bg)"
+            data-cursor="active"
+          >
+            <div class="mb-6">
+              <svg
+                width="48"
+                height="48"
+                viewBox="0 0 48 48"
+                class="agent-symbol"
+              >
+                <line
+                  x1="14"
+                  y1="6"
+                  x2="14"
+                  y2="42"
+                  stroke="#d4af6a"
+                  stroke-width="1.4"
+                />
+                <line
+                  x1="34"
+                  y1="6"
+                  x2="34"
+                  y2="42"
+                  stroke="#d4af6a"
+                  stroke-width="1.4"
+                />
+                <line
+                  x1="14"
+                  y1="14"
+                  x2="34"
+                  y2="14"
+                  stroke="#d4af6a"
+                  stroke-width="1"
+                />
+                <line
+                  x1="14"
+                  y1="34"
+                  x2="34"
+                  y2="34"
+                  stroke="#d4af6a"
+                  stroke-width="1"
+                />
+                <rect x="22" y="20" width="4" height="8" fill="#d4af6a" />
+                <circle cx="24" cy="24" r="1.5" fill="#0d0a06" />
+              </svg>
+            </div>
+            <div class="label-mono mb-2">portão</div>
+            <h3 class="title-display text-2xl lg:text-3xl mb-4">Gate</h3>
+            <p
+              class="serif text-sm leading-relaxed mb-4"
+              style="color: var(--ink-dim)"
+            >
+              Avalia riscos e pede autorização antes de ações sensíveis.
+            </p>
+            <div class="mono text-[10px]" style="color: var(--ink-mute)">
+              <span style="color: var(--gold)">°</span> autorização
+            </div>
+          </div>
+
+          <!-- Forge -->
+          <div
+            class="agent-card reveal lg:col-span-3 p-8 lg:p-10 relative"
+            style="background: var(--bg)"
+            data-cursor="active"
+          >
+            <div class="mb-6">
+              <svg
+                width="48"
+                height="48"
+                viewBox="0 0 48 48"
+                class="agent-symbol"
+              >
+                <path
+                  d="M 24 4 L 42 36 L 6 36 Z"
+                  fill="none"
+                  stroke="#d4af6a"
+                  stroke-width="1.4"
+                />
+                <path
+                  d="M 24 4 L 24 36"
+                  stroke="#d4af6a"
+                  stroke-width="0.8"
+                  opacity="0.5"
+                />
+                <line
+                  x1="12"
+                  y1="22"
+                  x2="36"
+                  y2="22"
+                  stroke="#d4af6a"
+                  stroke-width="0.8"
+                  opacity="0.5"
+                />
+                <circle cx="24" cy="26" r="2.5" fill="#d4af6a" />
+                <line
+                  x1="6"
+                  y1="40"
+                  x2="42"
+                  y2="40"
+                  stroke="#d4af6a"
+                  stroke-width="1"
+                />
+              </svg>
+            </div>
+            <div class="label-mono mb-2">construtor</div>
+            <h3 class="title-display text-2xl lg:text-3xl mb-4">Forge</h3>
+            <p
+              class="serif text-sm leading-relaxed mb-4"
+              style="color: var(--ink-dim)"
+            >
+              Executa o plano em passos controlados e reversíveis.
+            </p>
+            <div class="mono text-[10px]" style="color: var(--ink-mute)">
+              <span style="color: var(--gold)">°</span> etapa 04 · implementação
+            </div>
+          </div>
+
+          <!-- Aegis -->
+          <div
+            class="agent-card reveal lg:col-span-4 p-8 lg:p-12 relative"
+            style="background: var(--bg)"
+            data-cursor="active"
+          >
+            <div class="flex items-start justify-between mb-8">
+              <div>
+                <div class="label-mono mb-2">validador</div>
+                <h3 class="title-display text-3xl lg:text-4xl">Aegis</h3>
+              </div>
+              <svg
+                width="56"
+                height="56"
+                viewBox="0 0 56 56"
+                class="agent-symbol"
+              >
+                <path
+                  d="M 28 4 L 48 12 L 48 28 Q 48 42 28 52 Q 8 42 8 28 L 8 12 Z"
+                  fill="none"
+                  stroke="#d4af6a"
+                  stroke-width="1.4"
+                />
+                <path
+                  d="M 18 28 L 25 35 L 38 20"
+                  fill="none"
+                  stroke="#d4af6a"
+                  stroke-width="1.6"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </div>
+            <p
+              class="serif text-base leading-relaxed mb-6"
+              style="color: var(--ink-dim)"
+            >
+              Submete o trabalho a critérios objetivos — testes, tipos,
+              contratos. Sem evidência, não há conclusão.
+            </p>
+            <div
+              class="mono text-[11px] flex items-center gap-2"
+              style="color: var(--ink-mute)"
+            >
+              <span style="color: var(--gold)">°</span> etapa 05 · validação
+            </div>
+          </div>
+
+          <!-- Patch -->
+          <div
+            class="agent-card reveal lg:col-span-5 p-8 lg:p-12 relative"
+            style="background: var(--bg)"
+            data-cursor="active"
+          >
+            <div class="flex items-start justify-between mb-8">
+              <div>
+                <div class="label-mono mb-2" style="color: var(--gold)">
+                  memória
+                </div>
+                <h3
+                  class="title-display text-3xl lg:text-4xl"
+                  style="color: var(--gold)"
+                >
+                  Patch
+                </h3>
+              </div>
+              <svg
+                width="56"
+                height="56"
+                viewBox="0 0 56 56"
+                class="agent-symbol"
+              >
+                <line
+                  x1="8"
+                  y1="8"
+                  x2="48"
+                  y2="48"
+                  stroke="#d4af6a"
+                  stroke-width="1.2"
+                />
+                <line
+                  x1="48"
+                  y1="8"
+                  x2="8"
+                  y2="48"
+                  stroke="#d4af6a"
+                  stroke-width="1.2"
+                />
+                <circle
+                  cx="8"
+                  cy="8"
+                  r="3"
+                  fill="none"
+                  stroke="#d4af6a"
+                  stroke-width="1"
+                />
+                <circle
+                  cx="48"
+                  cy="8"
+                  r="3"
+                  fill="none"
+                  stroke="#d4af6a"
+                  stroke-width="1"
+                />
+                <circle
+                  cx="8"
+                  cy="48"
+                  r="3"
+                  fill="none"
+                  stroke="#d4af6a"
+                  stroke-width="1"
+                />
+                <circle
+                  cx="48"
+                  cy="48"
+                  r="3"
+                  fill="none"
+                  stroke="#d4af6a"
+                  stroke-width="1"
+                />
+                <circle cx="28" cy="28" r="4" fill="#c8922a" />
+                <circle
+                  cx="28"
+                  cy="28"
+                  r="22"
+                  fill="none"
+                  stroke="#d4af6a"
+                  stroke-width="0.6"
+                  opacity="0.3"
+                  stroke-dasharray="2 4"
+                />
+              </svg>
+            </div>
+            <p
+              class="serif text-base leading-relaxed mb-6"
+              style="color: var(--ink-dim)"
+            >
+              Escreve decisões, contextos e aprendizados em memória durável.
+              Costura o que foi feito ao que será feito — o projeto lembra de si
+              mesmo.
+            </p>
+            <div
+              class="mono text-[11px] flex items-center gap-2"
+              style="color: var(--gold)"
+            >
+              <span>°</span> etapa 06 · memória · persistente
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-12 flex items-center gap-4 reveal">
+          <div class="hairline flex-1"></div>
+          <span class="mono text-[11px]" style="color: var(--ink-mute)"
+            >6 agentes · 6 papéis · 1 sistema</span
+          >
+          <div class="hairline flex-1"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- DUAS DISTRIBUIÇÕES -->
+    <section id="distribuicoes" class="relative px-6 lg:px-12 py-32 lg:py-48">
+      <div class="max-w-[1440px] mx-auto">
+        <div class="grid lg:grid-cols-12 gap-10 mb-20 reveal">
+          <div class="lg:col-span-7">
+            <div class="flex items-center gap-3 mb-6">
+              <span class="sec-num mono text-xs" style="color: var(--gold)"
+                >§ IV</span
+              >
+              <div class="hairline w-10"></div>
+              <span class="label-mono">duas distribuições · mesma oficina</span>
+            </div>
+            <h2 class="title-display text-4xl md:text-5xl lg:text-6xl">
+              Duas ferramentas,
+              <em style="color: var(--gold); font-style: italic"
+                >mesmo ofício</em
+              >.
+            </h2>
+          </div>
+          <div class="lg:col-span-5 lg:pt-4">
+            <p
+              class="serif text-base leading-relaxed"
+              style="color: var(--ink-dim)"
+            >
+              O FlowAI existe em duas formas: uma integrada ao OpenCode, outra
+              portátil baseada em AGENTS.md. Escolha conforme o ferramental do
+              seu projeto.
+            </p>
+          </div>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-6 lg:gap-10">
+          <!-- flowai (OpenCode) -->
+          <div
+            class="artifact reveal p-8 lg:p-12 relative"
+            data-cursor="active"
+          >
+            <div class="relative z-10">
+              <div class="flex items-center justify-between mb-8">
+                <div class="flex items-center gap-3">
+                  <svg width="24" height="24" viewBox="0 0 24 24">
+                    <rect
+                      x="4"
+                      y="4"
+                      width="16"
+                      height="16"
+                      fill="none"
+                      stroke="#d4af6a"
+                      stroke-width="1.2"
+                    />
+                    <rect x="9" y="9" width="6" height="6" fill="#d4af6a" />
+                    <line
+                      x1="4"
+                      y1="9"
+                      x2="9"
+                      y2="9"
+                      stroke="#d4af6a"
+                      stroke-width="0.8"
+                    />
+                    <line
+                      x1="15"
+                      y1="15"
+                      x2="20"
+                      y2="15"
+                      stroke="#d4af6a"
+                      stroke-width="0.8"
+                    />
+                  </svg>
+                  <span class="label-mono">distribuição principal</span>
+                </div>
+                <span
+                  class="mono text-[10px] px-2 py-1 border"
+                  style="border-color: var(--gold); color: var(--gold)"
+                  >integrado</span
+                >
+              </div>
+
+              <h3 class="title-display text-3xl lg:text-4xl mb-4">
+                @mvoikolesco/flowai
+              </h3>
+              <p
+                class="serif text-base leading-relaxed mb-8"
+                style="color: var(--ink-dim)"
+              >
+                Integração completa com OpenCode. O workflow é executado
+                nativamente, com acesso a todas as etapas, agentes e memória
+                persistente do projeto.
+              </p>
+
+              <div class="space-y-3 mb-8">
+                <div class="flex items-start gap-3 mono text-xs">
+                  <span style="color: var(--gold)">°</span>
+                  <span style="color: var(--ink-dim)"
+                    >orquestração nativa via OpenCode</span
+                  >
+                </div>
+                <div class="flex items-start gap-3 mono text-xs">
+                  <span style="color: var(--gold)">°</span>
+                  <span style="color: var(--ink-dim)"
+                    >seis agentes com jurisdições próprias</span
+                  >
+                </div>
+                <div class="flex items-start gap-3 mono text-xs">
+                  <span style="color: var(--gold)">°</span>
+                  <span style="color: var(--ink-dim)"
+                    >memória de projeto persistente</span
+                  >
+                </div>
+                <div class="flex items-start gap-3 mono text-xs">
+                  <span style="color: var(--gold)">°</span>
+                  <span style="color: var(--ink-dim)"
+                    >validação e portão de autorização ativos</span
+                  >
+                </div>
+              </div>
+
+              <div
+                class="mono text-xs p-4 border"
+                style="
+                  border-color: var(--line);
+                  background: rgba(0, 0, 0, 0.4);
+                "
+              >
+                <span style="color: var(--ink-mute)">$</span>
+                <span style="color: var(--ink)">npm install</span>
+                <span style="color: var(--gold)">@mvoikolesco/flowai</span>
+              </div>
+
+              <a
+                href="https://www.npmjs.com/package/@mvoikolesco/flowai"
+                target="_blank"
+                rel="noopener"
+                class="mt-6 inline-flex items-center gap-2 mono text-xs ulink"
+                data-cursor="active"
+              >
+                abrir no npm <span>→</span>
+              </a>
+            </div>
+          </div>
+
+          <!-- flowai-portable -->
+          <div
+            class="artifact reveal p-8 lg:p-12 relative"
+            data-cursor="active"
+          >
+            <div class="relative z-10">
+              <div class="flex items-center justify-between mb-8">
+                <div class="flex items-center gap-3">
+                  <svg width="24" height="24" viewBox="0 0 24 24">
+                    <path
+                      d="M 12 3 L 21 8 L 21 16 L 12 21 L 3 16 L 3 8 Z"
+                      fill="none"
+                      stroke="#d4af6a"
+                      stroke-width="1.2"
+                    />
+                    <circle
+                      cx="12"
+                      cy="12"
+                      r="3"
+                      fill="none"
+                      stroke="#d4af6a"
+                      stroke-width="1"
+                    />
+                    <line
+                      x1="12"
+                      y1="3"
+                      x2="12"
+                      y2="9"
+                      stroke="#d4af6a"
+                      stroke-width="0.8"
+                    />
+                    <line
+                      x1="12"
+                      y1="15"
+                      x2="12"
+                      y2="21"
+                      stroke="#d4af6a"
+                      stroke-width="0.8"
+                    />
+                  </svg>
+                  <span class="label-mono">distribuição portátil</span>
+                </div>
+                <span
+                  class="mono text-[10px] px-2 py-1 border"
+                  style="
+                    border-color: var(--line-strong);
+                    color: var(--ink-dim);
+                  "
+                  >agnóstico</span
+                >
+              </div>
+
+              <h3 class="title-display text-3xl lg:text-4xl mb-4">
+                @mvoikolesco/flowai-portable
+              </h3>
+              <p
+                class="serif text-base leading-relaxed mb-8"
+                style="color: var(--ink-dim)"
+              >
+                Workflow agnóstico baseado em AGENTS.md e skills compartilhadas.
+                Leve o método para qualquer ferramenta que respeite o protocolo.
+              </p>
+
+              <div class="space-y-3 mb-8">
+                <div class="flex items-start gap-3 mono text-xs">
+                  <span style="color: var(--gold)">°</span>
+                  <span style="color: var(--ink-dim)"
+                    >protocolo AGENTS.md como contrato</span
+                  >
+                </div>
+                <div class="flex items-start gap-3 mono text-xs">
+                  <span style="color: var(--gold)">°</span>
+                  <span style="color: var(--ink-dim)"
+                    >skills reutilizáveis entre projetos</span
+                  >
+                </div>
+                <div class="flex items-start gap-3 mono text-xs">
+                  <span style="color: var(--gold)">°</span>
+                  <span style="color: var(--ink-dim)"
+                    >compatível com múltiplos runtimes</span
+                  >
+                </div>
+                <div class="flex items-start gap-3 mono text-xs">
+                  <span style="color: var(--gold)">°</span>
+                  <span style="color: var(--ink-dim)"
+                    >mesmo método, sem lock-in</span
+                  >
+                </div>
+              </div>
+
+              <div
+                class="mono text-xs p-4 border"
+                style="
+                  border-color: var(--line);
+                  background: rgba(0, 0, 0, 0.4);
+                "
+              >
+                <span style="color: var(--ink-mute)">$</span>
+                <span style="color: var(--ink)">npm install</span>
+                <span style="color: var(--gold)"
+                  >@mvoikolesco/flowai-portable</span
+                >
+              </div>
+
+              <a
+                href="https://www.npmjs.com/package/@mvoikolesco/flowai-portable"
+                target="_blank"
+                rel="noopener"
+                class="mt-6 inline-flex items-center gap-2 mono text-xs ulink"
+                data-cursor="active"
+              >
+                abrir no npm <span>→</span>
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-10 flex items-center gap-3 reveal">
+          <span class="mono text-[11px]" style="color: var(--ink-mute)">°</span>
+          <span class="mono text-[11px]" style="color: var(--ink-mute)"
+            >ambas as distribuições compartilham o mesmo núcleo
+            metodológico</span
+          >
+        </div>
+      </div>
+    </section>
+
+    <!-- TERMINAL -->
+    <section id="terminal" class="relative px-6 lg:px-12 py-32 lg:py-48">
+      <div class="max-w-[1440px] mx-auto">
+        <div class="grid lg:grid-cols-12 gap-10 mb-12 reveal">
+          <div class="lg:col-span-6">
+            <div class="flex items-center gap-3 mb-6">
+              <span class="sec-num mono text-xs" style="color: var(--gold)"
+                >§ V</span
+              >
+              <div class="hairline w-10"></div>
+              <span class="label-mono">instalação · terminal</span>
+            </div>
+            <h2 class="title-display text-4xl md:text-5xl lg:text-6xl">
+              Três linhas para
+              <em style="color: var(--gold); font-style: italic">começar</em>.
+            </h2>
+          </div>
+          <div class="lg:col-span-5 lg:col-start-8 lg:pt-4">
+            <p
+              class="serif text-base leading-relaxed"
+              style="color: var(--ink-dim)"
+            >
+              Instale. Inicialize. Chame o FlowAI dentro do seu agente. O
+              workflow passa a operar entre a solicitação e a resposta.
+            </p>
+          </div>
+        </div>
+
+        <div class="reveal max-w-3xl">
+          <div class="terminal relative">
+            <!-- header -->
+            <div
+              class="flex items-center justify-between px-5 py-3 border-b"
+              style="border-color: var(--line)"
+            >
+              <div class="flex items-center gap-2">
+                <div
+                  class="w-2.5 h-2.5 rounded-full"
+                  style="background: rgba(212, 175, 106, 0.3)"
+                ></div>
+                <div
+                  class="w-2.5 h-2.5 rounded-full"
+                  style="background: rgba(212, 175, 106, 0.5)"
+                ></div>
+                <div
+                  class="w-2.5 h-2.5 rounded-full"
+                  style="background: var(--gold)"
+                ></div>
+                <span
+                  class="ml-3 mono text-[11px]"
+                  style="color: var(--ink-mute)"
+                  >flowai — bash — 80×24</span
+                >
+              </div>
+              <span class="mono text-[10px]" style="color: var(--ink-mute)"
+                >~ / project</span
+              >
+            </div>
+
+            <!-- body -->
+            <div class="p-5 lg:p-6 space-y-3" id="terminalBody">
+              <div class="flex items-start gap-3">
+                <span class="mono select-none" style="color: var(--mustard)"
+                  >$</span
+                >
+                <span class="mono flex-1" id="line1"
+                  ><span style="color: var(--ink)">npm install</span>
+                  <span style="color: var(--gold)">@mvoikolesco/flowai</span
+                  ><span class="blink"></span
+                ></span>
+              </div>
+              <div
+                class="mono text-xs hidden"
+                id="line2"
+                style="color: var(--ink-mute)"
+              >
+                <span style="color: var(--gold)">°</span> adicionado a
+                dependencies · 1 pacote · 12s
+              </div>
+              <div class="flex items-start gap-3 hidden" id="line3">
+                <span class="mono select-none" style="color: var(--mustard)"
+                  >$</span
+                >
+                <span class="mono flex-1"
+                  ><span style="color: var(--ink)">npx flowai</span>
+                  <span style="color: var(--gold)">init</span
+                  ><span class="blink"></span
+                ></span>
+              </div>
+              <div
+                class="mono text-xs hidden"
+                id="line4"
+                style="color: var(--ink-mute)"
+              >
+                <span style="color: var(--gold)">°</span> AGENTS.md criado ·
+                skills registradas · memória inicializada
+              </div>
+              <div class="flex items-start gap-3 hidden" id="line5">
+                <span class="mono select-none" style="color: var(--mustard)"
+                  >$</span
+                >
+                <span class="mono flex-1"
+                  ><span style="color: var(--ink)">flowai</span>
+                  <span style="color: var(--gold)">run</span>
+                  <span style="color: var(--ink-dim)"
+                    >"adicionar validação no endpoint /auth"</span
+                  ><span class="blink"></span
+                ></span>
+              </div>
+              <div
+                class="mono text-xs hidden"
+                id="line6"
+                style="color: var(--ink-mute)"
+              >
+                <span style="color: var(--gold)">°</span> Nexus classificou ·
+                Scout planejou · Forge implementou<br />
+                <span style="color: var(--gold)">°</span> Aegis validou · Patch
+                persistiu memória<br />
+                <span style="color: var(--mustard)">°</span> workflow concluído
+                · 6 etapas · evidências em /memory
+              </div>
+            </div>
+
+            <!-- copy button -->
+            <div
+              class="px-5 py-3 border-t flex items-center justify-between"
+              style="border-color: var(--line)"
+            >
+              <span class="mono text-[10px]" style="color: var(--ink-mute)"
+                >comando principal</span
+              >
+              <button
+                class="copy-btn mono text-[11px] px-3 py-1.5 border flex items-center gap-2"
+                style="border-color: var(--line-strong); color: var(--ink-dim)"
+                data-cursor="active"
+                data-copy="npm install @mvoikolesco/flowai"
+              >
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                  <rect
+                    x="3"
+                    y="3"
+                    width="6"
+                    height="6"
+                    stroke="currentColor"
+                    stroke-width="1"
+                  />
+                  <path
+                    d="M 1 8 L 1 1 L 8 1"
+                    stroke="currentColor"
+                    stroke-width="1"
+                    fill="none"
+                  />
+                </svg>
+                <span class="copy-text">copiar</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- MEMÓRIA -->
+    <section id="memoria" class="relative px-6 lg:px-12 py-32 lg:py-48">
+      <div class="max-w-[1440px] mx-auto">
+        <div class="grid lg:grid-cols-12 gap-10 mb-20 reveal">
+          <div class="lg:col-span-7">
+            <div class="flex items-center gap-3 mb-6">
+              <span class="sec-num mono text-xs" style="color: var(--gold)"
+                >§ VI</span
+              >
+              <div class="hairline w-10"></div>
+              <span class="label-mono">memória durável · grafo de projeto</span>
+            </div>
+            <h2 class="title-display text-4xl md:text-5xl lg:text-6xl">
+              O projeto
+              <em style="color: var(--gold); font-style: italic"
+                >lembra de si</em
+              >.
+            </h2>
+          </div>
+          <div class="lg:col-span-5 lg:pt-4">
+            <p
+              class="serif text-base leading-relaxed"
+              style="color: var(--ink-dim)"
+            >
+              Cada execução escreve na memória: decisões, contextos, atalhos,
+              restrições. O que foi aprendido vira estrutura para a próxima
+              execução.
+            </p>
+          </div>
+        </div>
+
+        <div class="grid lg:grid-cols-12 gap-10 lg:gap-16 items-start reveal">
+          <!-- Graph -->
+          <div class="lg:col-span-8 relative">
+            <div
+              class="border p-6 lg:p-10 relative"
+              style="
+                border-color: var(--line);
+                background: linear-gradient(
+                  180deg,
+                  rgba(212, 175, 106, 0.02),
+                  transparent
+                );
+              "
+            >
+              <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center gap-3">
+                  <span
+                    class="w-2 h-2 rounded-full"
+                    style="
+                      background: var(--mustard);
+                      box-shadow: 0 0 6px var(--mustard);
+                    "
+                  ></span>
+                  <span class="mono text-[11px]" style="color: var(--ink-dim)"
+                    >memory.graph · 12 nós · 18 conexões</span
+                  >
+                </div>
+                <span class="mono text-[10px]" style="color: var(--ink-mute)"
+                  >live</span
+                >
+              </div>
+
+              <svg
+                viewBox="0 0 700 480"
+                class="w-full"
+                preserveAspectRatio="xMidYMid meet"
+              >
+                <!-- Connections -->
+                <g
+                  stroke="#d4af6a"
+                  stroke-width="0.8"
+                  fill="none"
+                  opacity="0.4"
+                >
+                  <line x1="150" y1="100" x2="280" y2="180" />
+                  <line x1="280" y1="180" x2="420" y2="120" />
+                  <line x1="280" y1="180" x2="380" y2="280" />
+                  <line x1="420" y1="120" x2="550" y2="200" />
+                  <line x1="380" y1="280" x2="550" y2="200" />
+                  <line x1="380" y1="280" x2="500" y2="380" />
+                  <line x1="150" y1="100" x2="200" y2="240" />
+                  <line x1="200" y1="240" x2="280" y2="180" />
+                  <line x1="200" y1="240" x2="380" y2="280" />
+                  <line x1="550" y1="200" x2="620" y2="320" />
+                  <line x1="500" y1="380" x2="620" y2="320" />
+                  <line x1="500" y1="380" x2="350" y2="420" />
+                  <line x1="200" y1="240" x2="120" y2="380" />
+                  <line x1="120" y1="380" x2="350" y2="420" />
+                  <line x1="350" y1="420" x2="500" y2="380" />
+                  <line x1="420" y1="120" x2="280" y2="180" />
+                  <line x1="620" y1="320" x2="500" y2="380" />
+                </g>
+
+                <!-- Animated connection (new memory being formed) -->
+                <line
+                  x1="550"
+                  y1="200"
+                  x2="620"
+                  y2="100"
+                  stroke="#c8922a"
+                  stroke-width="1"
+                  stroke-dasharray="3 3"
+                >
+                  <animate
+                    attributeName="stroke-dashoffset"
+                    from="0"
+                    to="-12"
+                    dur="1.2s"
+                    repeatCount="indefinite"
+                  />
+                </line>
+
+                <!-- Nodes -->
+                <g>
+                  <!-- Node: AGENTS.md (central) -->
+                  <g transform="translate(280, 180)">
+                    <circle
+                      r="20"
+                      fill="rgba(212,175,106,0.08)"
+                      stroke="#d4af6a"
+                      stroke-width="1.5"
+                    />
+                    <circle r="4" fill="#d4af6a" class="mem-pulse" />
+                    <text
+                      y="38"
+                      text-anchor="middle"
+                      fill="#e8dcc0"
+                      font-family="JetBrains Mono"
+                      font-size="10"
+                    >
+                      AGENTS.md
+                    </text>
+                    <text
+                      y="50"
+                      text-anchor="middle"
+                      fill="#7a6b54"
+                      font-family="JetBrains Mono"
+                      font-size="8"
+                    >
+                      root
+                    </text>
+                  </g>
+
+                  <!-- Node: architecture -->
+                  <g transform="translate(150, 100)">
+                    <circle
+                      r="14"
+                      fill="rgba(212,175,106,0.05)"
+                      stroke="#d4af6a"
+                      stroke-width="1"
+                    />
+                    <circle r="3" fill="#d4af6a" />
+                    <text
+                      y="28"
+                      text-anchor="middle"
+                      fill="#b8a888"
+                      font-family="JetBrains Mono"
+                      font-size="9"
+                    >
+                      architecture.md
+                    </text>
+                  </g>
+
+                  <!-- Node: auth -->
+                  <g transform="translate(420, 120)">
+                    <circle
+                      r="14"
+                      fill="rgba(212,175,106,0.05)"
+                      stroke="#d4af6a"
+                      stroke-width="1"
+                    />
+                    <circle r="3" fill="#d4af6a" />
+                    <text
+                      y="28"
+                      text-anchor="middle"
+                      fill="#b8a888"
+                      font-family="JetBrains Mono"
+                      font-size="9"
+                    >
+                      auth.md
+                    </text>
+                  </g>
+
+                  <!-- Node: api-routes -->
+                  <g transform="translate(550, 200)">
+                    <circle
+                      r="14"
+                      fill="rgba(212,175,106,0.05)"
+                      stroke="#d4af6a"
+                      stroke-width="1"
+                    />
+                    <circle r="3" fill="#d4af6a" />
+                    <text
+                      y="28"
+                      text-anchor="middle"
+                      fill="#b8a888"
+                      font-family="JetBrains Mono"
+                      font-size="9"
+                    >
+                      api-routes.md
+                    </text>
+                  </g>
+
+                  <!-- Node: validation -->
+                  <g transform="translate(380, 280)">
+                    <circle
+                      r="14"
+                      fill="rgba(212,175,106,0.05)"
+                      stroke="#d4af6a"
+                      stroke-width="1"
+                    />
+                    <circle r="3" fill="#d4af6a" />
+                    <text
+                      y="28"
+                      text-anchor="middle"
+                      fill="#b8a888"
+                      font-family="JetBrains Mono"
+                      font-size="9"
+                    >
+                      validation.md
+                    </text>
+                  </g>
+
+                  <!-- Node: conventions -->
+                  <g transform="translate(200, 240)">
+                    <circle
+                      r="14"
+                      fill="rgba(212,175,106,0.05)"
+                      stroke="#d4af6a"
+                      stroke-width="1"
+                    />
+                    <circle r="3" fill="#d4af6a" />
+                    <text
+                      y="28"
+                      text-anchor="middle"
+                      fill="#b8a888"
+                      font-family="JetBrains Mono"
+                      font-size="9"
+                    >
+                      conventions.md
+                    </text>
+                  </g>
+
+                  <!-- Node: testing -->
+                  <g transform="translate(500, 380)">
+                    <circle
+                      r="14"
+                      fill="rgba(212,175,106,0.05)"
+                      stroke="#d4af6a"
+                      stroke-width="1"
+                    />
+                    <circle r="3" fill="#d4af6a" />
+                    <text
+                      y="28"
+                      text-anchor="middle"
+                      fill="#b8a888"
+                      font-family="JetBrains Mono"
+                      font-size="9"
+                    >
+                      testing.md
+                    </text>
+                  </g>
+
+                  <!-- Node: decisions -->
+                  <g transform="translate(620, 320)">
+                    <circle
+                      r="14"
+                      fill="rgba(212,175,106,0.05)"
+                      stroke="#d4af6a"
+                      stroke-width="1"
+                    />
+                    <circle r="3" fill="#d4af6a" />
+                    <text
+                      y="28"
+                      text-anchor="middle"
+                      fill="#b8a888"
+                      font-family="JetBrains Mono"
+                      font-size="9"
+                    >
+                      decisions.md
+                    </text>
+                  </g>
+
+                  <!-- Node: db -->
+                  <g transform="translate(120, 380)">
+                    <circle
+                      r="14"
+                      fill="rgba(212,175,106,0.05)"
+                      stroke="#d4af6a"
+                      stroke-width="1"
+                    />
+                    <circle r="3" fill="#d4af6a" />
+                    <text
+                      y="28"
+                      text-anchor="middle"
+                      fill="#b8a888"
+                      font-family="JetBrains Mono"
+                      font-size="9"
+                    >
+                      schema.md
+                    </text>
+                  </g>
+
+                  <!-- Node: patches -->
+                  <g transform="translate(350, 420)">
+                    <circle
+                      r="14"
+                      fill="rgba(212,175,106,0.05)"
+                      stroke="#d4af6a"
+                      stroke-width="1"
+                    />
+                    <circle r="3" fill="#d4af6a" />
+                    <text
+                      y="28"
+                      text-anchor="middle"
+                      fill="#b8a888"
+                      font-family="JetBrains Mono"
+                      font-size="9"
+                    >
+                      patches.md
+                    </text>
+                  </g>
+
+                  <!-- New node being added (animated) -->
+                  <g transform="translate(620, 100)">
+                    <circle
+                      r="14"
+                      fill="rgba(200,146,42,0.15)"
+                      stroke="#c8922a"
+                      stroke-width="1.5"
+                    >
+                      <animate
+                        attributeName="r"
+                        values="14;17;14"
+                        dur="2s"
+                        repeatCount="indefinite"
+                      />
+                    </circle>
+                    <circle r="4" fill="#c8922a" class="mem-pulse" />
+                    <text
+                      y="28"
+                      text-anchor="middle"
+                      fill="#d4af6a"
+                      font-family="JetBrains Mono"
+                      font-size="9"
+                    >
+                      + rate-limit.md
+                    </text>
+                    <text
+                      y="40"
+                      text-anchor="middle"
+                      fill="#c8922a"
+                      font-family="JetBrains Mono"
+                      font-size="7"
+                    >
+                      writing…
+                    </text>
+                  </g>
+                </g>
+
+                <!-- Decorative corner marks -->
+                <g
+                  stroke="#d4af6a"
+                  stroke-width="0.6"
+                  opacity="0.4"
+                  fill="none"
+                >
+                  <path d="M 10 10 L 10 25 M 10 10 L 25 10" />
+                  <path d="M 690 10 L 690 25 M 690 10 L 675 10" />
+                  <path d="M 10 470 L 10 455 M 10 470 L 25 470" />
+                  <path d="M 690 470 L 690 455 M 690 470 L 675 470" />
+                </g>
+              </svg>
+
+              <div
+                class="mt-4 flex items-center justify-between mono text-[10px]"
+                style="color: var(--ink-mute)"
+              >
+                <span>última escrita: 14:32 · Patch</span>
+                <span>° memória viva</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Side panel: memory entries -->
+          <div class="lg:col-span-4">
+            <div class="border-l pl-6" style="border-color: var(--line-strong)">
+              <div class="label-mono mb-6">registros recentes</div>
+
+              <div class="space-y-7">
+                <div>
+                  <div class="flex items-baseline gap-3 mb-2">
+                    <span class="mono text-[10px]" style="color: var(--gold)"
+                      >14:32</span
+                    >
+                    <span
+                      class="mono text-[10px]"
+                      style="color: var(--ink-mute)"
+                      >patch · auth</span
+                    >
+                  </div>
+                  <p
+                    class="serif text-sm leading-relaxed"
+                    style="color: var(--ink-dim)"
+                  >
+                    Rate-limit adicionado ao endpoint
+                    <span class="mono text-xs" style="color: var(--gold)"
+                      >/auth</span
+                    >. Decisão: token bucket, 10 req/min.
+                  </p>
+                </div>
+
+                <div>
+                  <div class="flex items-baseline gap-3 mb-2">
+                    <span class="mono text-[10px]" style="color: var(--gold)"
+                      >14:18</span
+                    >
+                    <span
+                      class="mono text-[10px]"
+                      style="color: var(--ink-mute)"
+                      >aegis · validate</span
+                    >
+                  </div>
+                  <p
+                    class="serif text-sm leading-relaxed"
+                    style="color: var(--ink-dim)"
+                  >
+                    24 testes, 0 falhas. Tipos limpos. Critério de conclusão
+                    atendido.
+                  </p>
+                </div>
+
+                <div>
+                  <div class="flex items-baseline gap-3 mb-2">
+                    <span class="mono text-[10px]" style="color: var(--gold)"
+                      >14:05</span
+                    >
+                    <span
+                      class="mono text-[10px]"
+                      style="color: var(--ink-mute)"
+                      >scout · plan</span
+                    >
+                  </div>
+                  <p
+                    class="serif text-sm leading-relaxed"
+                    style="color: var(--ink-dim)"
+                  >
+                    Plano para feature de rate-limit: 4 arquivos, 6 etapas, 1
+                    risco mapeado.
+                  </p>
+                </div>
+
+                <div>
+                  <div class="flex items-baseline gap-3 mb-2">
+                    <span class="mono text-[10px]" style="color: var(--gold)"
+                      >13:58</span
+                    >
+                    <span
+                      class="mono text-[10px]"
+                      style="color: var(--ink-mute)"
+                      >nexus · classify</span
+                    >
+                  </div>
+                  <p
+                    class="serif text-sm leading-relaxed"
+                    style="color: var(--ink-dim)"
+                  >
+                    Solicitação classificada como
+                    <span class="mono text-xs" style="color: var(--gold)"
+                      >feature</span
+                    >
+                    · segurança · média complexidade.
+                  </p>
+                </div>
+
+                <div class="pt-4 border-t" style="border-color: var(--line)">
+                  <p
+                    class="mono text-[11px] leading-relaxed"
+                    style="color: var(--ink-mute)"
+                  >
+                    <span style="color: var(--gold)">°</span> cada entrada é uma
+                    evidência. Cada evidência é uma âncora para a próxima
+                    execução.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA FINAL -->
+    <section class="relative px-6 lg:px-12 py-32 lg:py-48 overflow-hidden">
+      <div class="max-w-[1440px] mx-auto relative">
+        <!-- Decorative circular motif -->
+        <div
+          class="absolute inset-0 flex items-center justify-center pointer-events-none opacity-30"
+        >
+          <svg
+            width="600"
+            height="600"
+            viewBox="0 0 600 600"
+            class="max-w-full"
+          >
+            <circle
+              cx="300"
+              cy="300"
+              r="280"
+              fill="none"
+              stroke="#d4af6a"
+              stroke-width="0.5"
+              opacity="0.3"
+            />
+            <circle
+              cx="300"
+              cy="300"
+              r="220"
+              fill="none"
+              stroke="#d4af6a"
+              stroke-width="0.5"
+              opacity="0.4"
+            />
+            <circle
+              cx="300"
+              cy="300"
+              r="160"
+              fill="none"
+              stroke="#d4af6a"
+              stroke-width="0.6"
+              opacity="0.5"
+            />
+            <circle
+              cx="300"
+              cy="300"
+              r="100"
+              fill="none"
+              stroke="#d4af6a"
+              stroke-width="0.8"
+              opacity="0.6"
+            />
+            <circle
+              cx="300"
+              cy="300"
+              r="40"
+              fill="none"
+              stroke="#c8922a"
+              stroke-width="1"
+              opacity="0.8"
+            />
+            <circle cx="300" cy="300" r="6" fill="#c8922a">
+              <animate
+                attributeName="r"
+                values="6;10;6"
+                dur="3s"
+                repeatCount="indefinite"
+              />
+            </circle>
+            <!-- Tick marks -->
+            <g stroke="#d4af6a" stroke-width="0.6" opacity="0.4">
+              <line x1="300" y1="20" x2="300" y2="30" />
+              <line x1="300" y1="570" x2="300" y2="580" />
+              <line x1="20" y1="300" x2="30" y2="300" />
+              <line x1="570" y1="300" x2="580" y2="300" />
+            </g>
+          </svg>
+        </div>
+
+        <div class="relative z-10 max-w-3xl mx-auto text-center reveal">
+          <div class="flex items-center justify-center gap-3 mb-8">
+            <div class="hairline w-12"></div>
+            <span class="label-mono">última página · § VII</span>
+            <div class="hairline w-12"></div>
+          </div>
+
+          <h2 class="title-display text-4xl md:text-6xl lg:text-7xl mb-10">
+            Transforme velocidade em
+            <em style="color: var(--gold); font-style: italic"
+              >engenharia confiável</em
+            >.
+          </h2>
+
+          <p
+            class="serif text-lg lg:text-xl leading-relaxed mb-12 max-w-xl mx-auto"
+            style="color: var(--ink-dim)"
+          >
+            O FlowAI está no npm. MIT, sem lock-in, pronto para ser chamado do
+            seu agente.
+          </p>
+
+          <a
+            href="https://www.npmjs.com/package/@mvoikolesco/flowai"
+            target="_blank"
+            rel="noopener"
+            class="btn-primary inline-flex"
+            data-cursor="active"
+          >
+            <span>Conhecer o FlowAI no npm</span>
+            <span>→</span>
+          </a>
+
+          <div
+            class="mt-10 flex items-center justify-center gap-3 mono text-[11px]"
+            style="color: var(--ink-mute)"
+          >
+            <span style="color: var(--gold)">°</span>
+            <span>@mvoikolesco/flowai · @mvoikolesco/flowai-portable</span>
+            <span style="color: var(--gold)">°</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer
+      class="relative px-6 lg:px-12 py-16 border-t"
+      style="border-color: var(--line)"
+    >
+      <div class="max-w-[1440px] mx-auto">
+        <div class="grid md:grid-cols-3 gap-8 items-start">
+          <div>
+            <a href="#" class="flex items-center gap-3 mb-4">
+              <svg width="26" height="26" viewBox="0 0 30 30">
+                <circle
+                  cx="15"
+                  cy="15"
+                  r="13"
+                  fill="none"
+                  stroke="#d4af6a"
+                  stroke-width="0.8"
+                  opacity="0.4"
+                />
+                <circle
+                  cx="15"
+                  cy="15"
+                  r="8.5"
+                  fill="none"
+                  stroke="#d4af6a"
+                  stroke-width="0.8"
+                  opacity="0.7"
+                />
+                <circle cx="15" cy="15" r="3" fill="#d4af6a" />
+              </svg>
+              <span class="serif text-lg font-medium">FlowAI</span>
+            </a>
+            <p
+              class="mono text-[11px] leading-relaxed"
+              style="color: var(--ink-mute)"
+            >
+              Biblioteca de orquestração de agentes.<br />Classificar, planejar,
+              implementar, validar, lembrar.
+            </p>
+          </div>
+
+          <div class="md:text-center">
+            <div class="label-mono mb-3">licença</div>
+            <p class="mono text-xs" style="color: var(--ink-dim)">
+              MIT · uso livre · sem garantia
+            </p>
+            <p class="mono text-[10px] mt-2" style="color: var(--ink-mute)">
+              © FlowAI · feito com paciência
+            </p>
+          </div>
+
+          <div class="md:text-right">
+            <div class="label-mono mb-3">distribuições</div>
+            <div class="space-y-1.5">
+              <a
+                href="https://www.npmjs.com/package/@mvoikolesco/flowai"
+                target="_blank"
+                rel="noopener"
+                class="block mono text-xs ulink"
+                data-cursor="active"
+                >@mvoikolesco/flowai</a
+              >
+              <a
+                href="https://www.npmjs.com/package/@mvoikolesco/flowai-portable"
+                target="_blank"
+                rel="noopener"
+                class="block mono text-xs ulink"
+                data-cursor="active"
+                >@mvoikolesco/flowai-portable</a
+              >
+            </div>
+          </div>
+        </div>
+
+        <div
+          class="mt-12 pt-6 border-t flex items-center justify-between"
+          style="border-color: var(--line)"
+        >
+          <span class="mono text-[10px]" style="color: var(--ink-mute)"
+            >°°°</span
+          >
+          <span class="mono text-[10px]" style="color: var(--ink-mute)"
+            >engenharia com agentes, sem improviso</span
+          >
+          <span class="mono text-[10px]" style="color: var(--ink-mute)"
+            >°°°</span
+          >
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      // Custom cursor
+      (function () {
+        const dot = document.getElementById("cursorDot");
+        const ring = document.getElementById("cursorRing");
+        if (!dot || !ring) return;
+        if (window.matchMedia("(hover: none), (pointer: coarse)").matches)
+          return;
+
+        let mx = 0,
+          my = 0,
+          rx = 0,
+          ry = 0;
+
+        window.addEventListener("mousemove", (e) => {
+          mx = e.clientX;
+          my = e.clientY;
+          dot.style.left = mx + "px";
+          dot.style.top = my + "px";
+        });
+
+        function animate() {
+          rx += (mx - rx) * 0.18;
+          ry += (my - ry) * 0.18;
+          ring.style.left = rx + "px";
+          ring.style.top = ry + "px";
+          requestAnimationFrame(animate);
+        }
+        animate();
+
+        // Interactive elements
+        document
+          .querySelectorAll('a, button, [data-cursor="active"]')
+          .forEach((el) => {
+            el.addEventListener("mouseenter", () => {
+              dot.classList.add("active");
+              ring.classList.add("active");
+            });
+            el.addEventListener("mouseleave", () => {
+              dot.classList.remove("active");
+              ring.classList.remove("active");
+            });
+          });
+      })();
+
+      // Reveal on scroll
+      (function () {
+        const reveals = document.querySelectorAll(".reveal");
+        const observer = new IntersectionObserver(
+          (entries) => {
+            entries.forEach((entry) => {
+              if (entry.isIntersecting) {
+                entry.target.classList.add("visible");
+                observer.unobserve(entry.target);
+              }
+            });
+          },
+          { threshold: 0.12, rootMargin: "0px 0px -60px 0px" },
+        );
+
+        reveals.forEach((el) => observer.observe(el));
+      })();
+
+      // Terminal typing animation
+      (function () {
+        const terminal = document.getElementById("terminalBody");
+        if (!terminal) return;
+
+        const reduceMotion = window.matchMedia(
+          "(prefers-reduced-motion: reduce)",
+        ).matches;
+        if (reduceMotion) {
+          // Show all lines immediately
+          ["line2", "line3", "line4", "line5", "line6"].forEach((id) => {
+            const el = document.getElementById(id);
+            if (el) el.classList.remove("hidden");
+          });
+          // Remove blinkers
+          document
+            .querySelectorAll(".blink")
+            .forEach((el) => el.classList.remove("blink"));
+          return;
+        }
+
+        let started = false;
+        const observer = new IntersectionObserver(
+          (entries) => {
+            entries.forEach((entry) => {
+              if (entry.isIntersecting && !started) {
+                started = true;
+                runSequence();
+              }
+            });
+          },
+          { threshold: 0.3 },
+        );
+
+        observer.observe(terminal);
+
+        function removeBlink(selector) {
+          const el = document.querySelector(selector + " .blink");
+          if (el) el.classList.remove("blink");
+        }
+
+        function showLine(id, delay) {
+          return new Promise((resolve) => {
+            setTimeout(() => {
+              const el = document.getElementById(id);
+              if (el) {
+                el.classList.remove("hidden");
+              }
+              resolve();
+            }, delay);
+          });
+        }
+
+        async function runSequence() {
+          await showLine("line2", 800);
+          removeBlink("#line1");
+          await showLine("line3", 600);
+          await showLine("line4", 1200);
+          removeBlink("#line3");
+          await showLine("line5", 700);
+          await showLine("line6", 1400);
+          removeBlink("#line5");
+        }
+      })();
+
+      // Copy button
+      (function () {
+        document.querySelectorAll(".copy-btn").forEach((btn) => {
+          btn.addEventListener("click", async () => {
+            const text = btn.dataset.copy;
+            if (!text) return;
+            try {
+              await navigator.clipboard.writeText(text);
+              const textEl = btn.querySelector(".copy-text");
+              const original = textEl.textContent;
+              btn.classList.add("copied");
+              textEl.textContent = "copiado";
+              setTimeout(() => {
+                btn.classList.remove("copied");
+                textEl.textContent = original;
+              }, 2000);
+            } catch (e) {
+              const textEl = btn.querySelector(".copy-text");
+              textEl.textContent = "erro";
+              setTimeout(() => {
+                textEl.textContent = "copiar";
+              }, 1500);
+            }
+          });
+        });
+      })();
+    </script>
+  </body>
+</html>

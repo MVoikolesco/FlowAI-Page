@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 
 const npmUrl = 'https://www.npmjs.com/package/@mvoikolesco/flowai';
 const portableNpmUrl = 'https://www.npmjs.com/package/@mvoikolesco/flowai-portable';
@@ -32,6 +32,8 @@ const benefits = [
 
 const flowSteps = ['Solicitação', 'Classificação', 'Planejamento', 'Implementação', 'Validação', 'Memória'];
 
+const terminalStates = ['READING_RULES', 'PLANNING', 'IMPLEMENTING', 'VALIDATING', 'UPDATING_MEMORY', 'COMPLETED'];
+
 const principles = [
   'Ler instruções do projeto e notas relevantes antes de agir.',
   'Escolher apenas as skills necessárias para o trabalho.',
@@ -53,6 +55,89 @@ const copyStatusMessages: Record<CopyStatus, string> = {
   unsupported: 'Área de transferência indisponível. Selecione e copie os comandos manualmente.',
   error: 'Não foi possível copiar. Selecione e copie os comandos manualmente.',
 };
+
+function useScrollReveal() {
+  useEffect(() => {
+    const sections = Array.from(document.querySelectorAll<HTMLElement>('[data-reveal]'));
+    document.documentElement.classList.add('reveal-enabled');
+
+    if (!('IntersectionObserver' in window)) {
+      sections.forEach((section) => section.classList.add('is-visible'));
+      return () => document.documentElement.classList.remove('reveal-enabled');
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('is-visible');
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      { rootMargin: '0px 0px -12% 0px', threshold: 0.16 },
+    );
+
+    sections.forEach((section) => observer.observe(section));
+    return () => {
+      observer.disconnect();
+      document.documentElement.classList.remove('reveal-enabled');
+    };
+  }, []);
+}
+
+function CustomCursor() {
+  const cursorRef = useRef<HTMLDivElement>(null);
+  const point = useRef({ x: 0, y: 0 });
+  const visual = useRef({ x: 0, y: 0 });
+
+  useEffect(() => {
+    if (!window.matchMedia) {
+      return undefined;
+    }
+
+    const canHover = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    if (!canHover || reducedMotion) {
+      return undefined;
+    }
+
+    document.documentElement.classList.add('custom-cursor-enabled');
+
+    let frame = 0;
+    const move = (event: PointerEvent) => {
+      point.current = { x: event.clientX, y: event.clientY };
+    };
+    const setInteractive = (event: PointerEvent) => {
+      const target = event.target as Element | null;
+      cursorRef.current?.classList.toggle(
+        'is-interactive',
+        Boolean(target?.closest('a, button, [role="button"], input, textarea, select')),
+      );
+    };
+    const draw = () => {
+      visual.current.x += (point.current.x - visual.current.x) * 0.24;
+      visual.current.y += (point.current.y - visual.current.y) * 0.24;
+      cursorRef.current?.style.setProperty('--cursor-x', `${visual.current.x}px`);
+      cursorRef.current?.style.setProperty('--cursor-y', `${visual.current.y}px`);
+      frame = window.requestAnimationFrame(draw);
+    };
+
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerover', setInteractive);
+    frame = window.requestAnimationFrame(draw);
+
+    return () => {
+      document.documentElement.classList.remove('custom-cursor-enabled');
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerover', setInteractive);
+      window.cancelAnimationFrame(frame);
+    };
+  }, []);
+
+  return <div className="custom-cursor" ref={cursorRef} aria-hidden="true" />;
+}
 
 function TerminalBlock({ title, description, commands }: TerminalBlockProps) {
   const [copyStatus, setCopyStatus] = useState<CopyStatus>('idle');
@@ -77,7 +162,7 @@ function TerminalBlock({ title, description, commands }: TerminalBlockProps) {
   const statusMessage = copyStatusMessages[copyStatus];
 
   return (
-    <article className="terminal-card">
+    <article className={`terminal-card ${copied ? 'is-copied' : ''}`}>
       <div>
         <p className="eyebrow">Instalação</p>
         <h3>{title}</h3>
@@ -92,6 +177,9 @@ function TerminalBlock({ title, description, commands }: TerminalBlockProps) {
         <pre>
           <code>{commands.map((command) => `$ ${command}`).join('\n')}</code>
         </pre>
+        <div className="terminal-processing" aria-hidden="true">
+          {terminalStates.map((state) => <span key={state}>{state}</span>)}
+        </div>
       </div>
       <button className="copy-button" type="button" onClick={copyCommands}>
         {copied ? 'Copiado' : 'Copiar comandos'}
@@ -123,12 +211,24 @@ function SectionHeading({
   );
 }
 
+function StageSeal({ step, index }: { step: string; index: number }) {
+  return (
+    <li className="visual-node">
+      <span className="seal" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
+      <strong>{step}</strong>
+    </li>
+  );
+}
+
 export function App() {
+  useScrollReveal();
+
   return (
     <div className="site-shell">
+      <CustomCursor />
       <header className="site-header">
         <a className="brand" href="#top" aria-label="FlowAI início">
-          <span className="brand-mark" aria-hidden="true">F</span>
+          <span className="brand-mark" aria-hidden="true">°</span>
           <span>FlowAI</span>
         </a>
         <nav aria-label="Navegação principal">
@@ -142,7 +242,7 @@ export function App() {
       <main id="top">
         <section className="hero-section" aria-labelledby="hero-title">
           <div className="hero-copy">
-            <p className="eyebrow">Workflow confiável para agentes de código</p>
+            <p className="eyebrow hero-kicker">Workflow confiável para agentes de código</p>
             <h1 id="hero-title">Planejamento, validação e memória para engenharia com IA.</h1>
             <p className="hero-lede">
               FlowAI adiciona contrato operacional, skills especializadas e uma base Obsidian ao seu projeto para orientar agentes do pedido à evidência.
@@ -152,17 +252,18 @@ export function App() {
               <a className="button secondary" href={npmUrl}>Ver no npm</a>
             </div>
           </div>
+          <div className="study-room" aria-hidden="true">
+            <div className="lamp-glow" />
+            <div className="desk-slab" />
+            <div className="obsidian-vault"><span /> <span /> <span /></div>
+            <div className="evidence-stack"><span /> <span /> <span /></div>
+          </div>
           <ol className="workflow-visual" aria-label="Visual do workflow FlowAI">
-            {flowSteps.map((step, index) => (
-              <li className="visual-node" key={step}>
-                <span>{String(index + 1).padStart(2, '0')}</span>
-                <strong>{step}</strong>
-              </li>
-            ))}
+            {flowSteps.map((step, index) => <StageSeal step={step} index={index} key={step} />)}
           </ol>
         </section>
 
-        <section className="section" id="beneficios" aria-labelledby="benefits-title">
+        <section className="section" id="beneficios" aria-labelledby="benefits-title" data-reveal>
           <SectionHeading eyebrow="Benefícios" title="Guardrails para entregar com confiança" titleId="benefits-title">
             Um fluxo reutilizável que melhora disciplina operacional sem adicionar dependências à aplicação.
           </SectionHeading>
@@ -176,21 +277,29 @@ export function App() {
           </div>
         </section>
 
-        <section className="section flow-section" id="fluxo" aria-labelledby="flow-title">
+        <section className="section flow-section" id="fluxo" aria-labelledby="flow-title" data-reveal>
           <SectionHeading eyebrow="Fluxo visual" title="Da solicitação à memória" titleId="flow-title">
             Cada etapa reforça entendimento, execução segura, validação proporcional e continuidade do conhecimento.
           </SectionHeading>
-          <ol className="flow-list" aria-label="Etapas do FlowAI">
-            {flowSteps.map((step) => <li key={step}>{step}</li>)}
-          </ol>
+          <div className="flow-board">
+            <ol className="flow-list" aria-label="Etapas do FlowAI">
+              {flowSteps.map((step, index) => <li key={step}><span>{index + 1}</span>{step}</li>)}
+            </ol>
+            <div className="connection-pattern" aria-hidden="true">
+              <span />
+              <span />
+              <span />
+            </div>
+          </div>
         </section>
 
-        <section className="section" aria-labelledby="comparison-title">
+        <section className="section" aria-labelledby="comparison-title" data-reveal>
           <SectionHeading eyebrow="Pacotes" title="Escolha entre integração completa e portátil" titleId="comparison-title">
             Use a distribuição alinhada ao agente e ao nível de integração desejado.
           </SectionHeading>
           <div className="comparison-grid">
             <article className="package-card featured">
+              <p className="package-label">Completo</p>
               <h3>@mvoikolesco/flowai</h3>
               <p>Para projetos que usam OpenCode.</p>
               <ul>
@@ -201,6 +310,7 @@ export function App() {
               <a href={npmUrl}>Abrir pacote completo no npm</a>
             </article>
             <article className="package-card">
+              <p className="package-label">Portátil</p>
               <h3>@mvoikolesco/flowai-portable</h3>
               <p>Para agentes compatíveis com AGENTS.md.</p>
               <ul>
@@ -213,7 +323,7 @@ export function App() {
           </div>
         </section>
 
-        <section className="section" id="instalacao" aria-labelledby="install-title">
+        <section className="section" id="instalacao" aria-labelledby="install-title" data-reveal>
           <SectionHeading eyebrow="Instalação" title="Comece pelo terminal" titleId="install-title">
             Requer Node.js 20.11 ou superior. A versão completa também requer OpenCode instalado.
           </SectionHeading>
@@ -231,7 +341,7 @@ export function App() {
           </div>
         </section>
 
-        <section className="section principles" aria-labelledby="principles-title">
+        <section className="section principles" aria-labelledby="principles-title" data-reveal>
           <SectionHeading eyebrow="Princípios operacionais" title="Menos improviso, mais evidência" titleId="principles-title">
             FlowAI transforma boas práticas de engenharia assistida em um caminho explícito e auditável.
           </SectionHeading>
@@ -240,7 +350,7 @@ export function App() {
           </ul>
         </section>
 
-        <section className="final-cta" aria-labelledby="cta-title">
+        <section className="final-cta" aria-labelledby="cta-title" data-reveal>
           <p className="eyebrow">Pronto para usar</p>
           <h2 id="cta-title">Dê ao seu agente um fluxo antes de pedir código.</h2>
           <a className="button primary" href="#instalacao">Copiar comandos de instalação</a>

@@ -32,6 +32,23 @@ describe('App', () => {
     }
   });
 
+  it('renders FlowAI-specific operational visuals without changing package links', () => {
+    render(<App />);
+
+    for (const state of ['READING_RULES', 'PLANNING', 'IMPLEMENTING', 'VALIDATING', 'UPDATING_MEMORY', 'COMPLETED']) {
+      expect(screen.getAllByText(state).length).toBeGreaterThan(0);
+    }
+
+    expect(screen.getByRole('link', { name: /abrir pacote completo no npm/i })).toHaveAttribute(
+      'href',
+      'https://www.npmjs.com/package/@mvoikolesco/flowai',
+    );
+    expect(screen.getByRole('link', { name: /abrir pacote portátil no npm/i })).toHaveAttribute(
+      'href',
+      'https://www.npmjs.com/package/@mvoikolesco/flowai-portable',
+    );
+  });
+
   it('copies portable installation commands from terminal blocks', async () => {
     const writeText = vi.fn().mockResolvedValue(undefined);
     const user = userEvent.setup({ writeToClipboard: false });
