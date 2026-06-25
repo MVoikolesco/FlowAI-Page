@@ -1,0 +1,36 @@
+timestamp=2026-06-25T19:03:07.780Z level=INFO run=b16de8c4 message="creating instance" directory="/mnt/c/Users/marcioj/Documents/Engenharia/01 - Arquivos/FlowAI-Page"
+timestamp=2026-06-25T19:03:07.782Z level=INFO run=b16de8c4 message=fromDirectory directory="/mnt/c/Users/marcioj/Documents/Engenharia/01 - Arquivos/FlowAI-Page"
+timestamp=2026-06-25T19:03:07.878Z level=INFO run=b16de8c4 message=bootstrapping directory="/mnt/c/Users/marcioj/Documents/Engenharia/01 - Arquivos/FlowAI-Page"
+timestamp=2026-06-25T19:03:07.885Z level=INFO run=b16de8c4 message=loading path=/home/mvoikolesco/.config/opencode/config.json
+timestamp=2026-06-25T19:03:07.886Z level=INFO run=b16de8c4 message=loading path=/home/mvoikolesco/.config/opencode/opencode.json
+timestamp=2026-06-25T19:03:07.886Z level=INFO run=b16de8c4 message=loading path=/home/mvoikolesco/.config/opencode/opencode.jsonc
+timestamp=2026-06-25T19:03:07.902Z level=INFO run=b16de8c4 message=loading path="/mnt/c/Users/marcioj/Documents/Engenharia/01 - Arquivos/FlowAI-Page/opencode.jsonc"
+timestamp=2026-06-25T19:03:07.941Z level=DEBUG run=b16de8c4 message="loading config from /mnt/c/Users/marcioj/Documents/Engenharia/01 - Arquivos/FlowAI-Page/.opencode/opencode.json"
+timestamp=2026-06-25T19:03:07.941Z level=INFO run=b16de8c4 message=loading path="/mnt/c/Users/marcioj/Documents/Engenharia/01 - Arquivos/FlowAI-Page/.opencode/opencode.json"
+timestamp=2026-06-25T19:03:07.943Z level=DEBUG run=b16de8c4 message="loading config from /mnt/c/Users/marcioj/Documents/Engenharia/01 - Arquivos/FlowAI-Page/.opencode/opencode.jsonc"
+timestamp=2026-06-25T19:03:07.943Z level=INFO run=b16de8c4 message=loading path="/mnt/c/Users/marcioj/Documents/Engenharia/01 - Arquivos/FlowAI-Page/.opencode/opencode.jsonc"
+timestamp=2026-06-25T19:03:08.059Z level=DEBUG run=b16de8c4 message="loading config from /home/mvoikolesco/.opencode/opencode.json"
+timestamp=2026-06-25T19:03:08.059Z level=INFO run=b16de8c4 message=loading path=/home/mvoikolesco/.opencode/opencode.json
+timestamp=2026-06-25T19:03:08.060Z level=DEBUG run=b16de8c4 message="loading config from /home/mvoikolesco/.opencode/opencode.jsonc"
+timestamp=2026-06-25T19:03:08.060Z level=INFO run=b16de8c4 message=loading path=/home/mvoikolesco/.opencode/opencode.jsonc
+timestamp=2026-06-25T19:03:08.193Z level=INFO run=b16de8c4 message="all LSPs are disabled"
+timestamp=2026-06-25T19:03:08.194Z level=INFO run=b16de8c4 message="all formatters are disabled"
+timestamp=2026-06-25T19:03:08.194Z level=INFO run=b16de8c4 message=init
+timestamp=2026-06-25T19:03:08.417Z level=INFO run=b16de8c4 message=created id=ses_0ffd5e07fffeGm6PznrLk3E2N0 slug=lucky-river version=1.17.11 projectID=90d74d7f3541f19c4f009c257826cce6ace06a66 directory="/mnt/c/Users/marcioj/Documents/Engenharia/01 - Arquivos/FlowAI-Page" path="" workspaceID=undefined parentID=undefined title="New session - 2026-06-25T19:03:08.417Z" agent=undefined model=undefined metadata=undefined permission="[{\"permission\":\"question\",\"pattern\":\"*\",\"action\":\"deny\"},{\"permission\":\"plan_enter\",\"pattern\":\"*\",\"action\":\"deny\"},{\"permission\":\"plan_exit\",\"pattern\":\"*\",\"action\":\"deny\"}]" cost=0 tokens.input=0 tokens.output=0 tokens.reasoning=0 tokens.cache.read=0 tokens.cache.write=0 time.created=1782414188417 time.updated=1782414188417
+timestamp=2026-06-25T19:03:08.436Z level=INFO run=b16de8c4 message="event connected"
+timestamp=2026-06-25T19:03:08.782Z level=INFO run=b16de8c4 message=loop session.id=ses_0ffd5e07fffeGm6PznrLk3E2N0 step=0
+[0m
+> build · gpt-5.5
+[0m
+timestamp=2026-06-25T19:03:08.810Z level=INFO run=b16de8c4 message=stream providerID=openai modelID=gpt-5.5 session.id=ses_0ffd5e07fffeGm6PznrLk3E2N0 small=true agent=title mode=primary
+timestamp=2026-06-25T19:03:08.826Z level=INFO run=b16de8c4 message="llm runtime selected" llm.runtime=ai-sdk llm.provider=openai llm.model=gpt-5.5
+timestamp=2026-06-25T19:03:08.966Z level=INFO run=b16de8c4 message=tracking hash=5edc13871a9148e5b3c23bb2fed4517f66fa1600 cwd="/mnt/c/Users/marcioj/Documents/Engenharia/01 - Arquivos/FlowAI-Page" git=/home/mvoikolesco/.local/share/opencode/snapshot/90d74d7f3541f19c4f009c257826cce6ace06a66/9d2b6f85b9d17f35734a99ad81aa530f18dafef6
+timestamp=2026-06-25T19:03:08.997Z level=ERROR run=b16de8c4 message=failed ref=err_98141a61 error="ResolveMessage: Cannot find module '@opencode-ai/plugin' from '/mnt/c/Users/marcioj/Documents/Engenharia/01 - Arquivos/FlowAI-Page/node_modules/@mvoikolesco/flowai/runtime/opencode/tools/library-roster.ts'" cause="ResolveMessage: Cannot find module '@opencode-ai/plugin' from '/mnt/c/Users/marcioj/Documents/Engenharia/01 - Arquivos/FlowAI-Page/node_modules/@mvoikolesco/flowai/runtime/opencode/tools/library-roster.ts'\n    at ToolRegistry.state (/$bunfs/root/chunk-1qh1yrfh.js:2:4789)\n    at ToolRegistry.state (definition) (/$bunfs/root/chunk-x7bvdxwv.js:479:689)\n    at ToolRegistry.all (/$bunfs/root/chunk-x7bvdxwv.js:481:62)\n    at ToolRegistry.all (definition) (/$bunfs/root/chunk-x7bvdxwv.js:479:2696)\n    at ToolRegistry.tools (/$bunfs/root/chunk-0tcwf9yr.js:1002:1785)\n    at ToolRegistry.tools (definition) (/$bunfs/root/chunk-x7bvdxwv.js:481:12)\n    at SessionTools.resolve (/$bunfs/root/chunk-0tcwf9yr.js:1021:3559)\n    at SessionTools.resolve (definition) (/$bunfs/root/chunk-0tcwf9yr.js:1002:963)\n    at SessionPrompt.run (/$bunfs/root/chunk-0tcwf9yr.js:1021:5670)\n    at SessionPrompt.run (definition) (/$bunfs/root/chunk-0tcwf9yr.js:1021:904)"
+[91m[1mError: [0m{
+  "name": "UnknownError",
+  "data": {
+    "message": "Unexpected server error. Check server logs for details.",
+    "ref": "err_98141a61"
+  }
+}
+timestamp=2026-06-25T19:03:08.998Z level=INFO run=b16de8c4 message="disposing instance" directory="/mnt/c/Users/marcioj/Documents/Engenharia/01 - Arquivos/FlowAI-Page"
