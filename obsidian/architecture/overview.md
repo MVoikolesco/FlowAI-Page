@@ -2,19 +2,21 @@
 
 ## System Context
 
-Document the system, external actors, and integrations.
+Static browser application presenting FlowAI to developers. External destinations are public npm package pages for `@mvoikolesco/flowai` and `@mvoikolesco/flowai-portable`.
 
 ## Components
 
-Document major components and ownership boundaries.
+- `src/App.tsx`: reusable in-file React sections for header, hero, benefits, workflow, package comparison, terminal install blocks, operational principles, CTA, and footer, with section headings connected to landmarks through `aria-labelledby`.
+- `src/styles.css`: global visual system, responsive layout, accessible focus states, dark tech aesthetic, and `prefers-reduced-motion` behavior.
+- `src/App.test.tsx`: content and copy-button interaction coverage.
 
 ## Data Flow
 
-Document important inputs, state transitions, storage, and outputs.
+The page is static except terminal copy buttons. Each terminal block joins command strings, writes them to `navigator.clipboard`, and temporarily changes the button label from `Copiar comandos` to `Copiado`.
 
 ## Runtime and Deployment
 
-Document runtime assumptions, environments, observability, and recovery.
+Built with Vite as a client-only static bundle. Validation uses `npm run typecheck`, `npm run lint`, `npm run test`, and `npm run build`.
 
 ## Related Notes
 
