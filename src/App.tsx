@@ -45,15 +45,36 @@ type TerminalBlockProps = {
   commands: string[];
 };
 
+type CopyStatus = 'idle' | 'success' | 'unsupported' | 'error';
+
+const copyStatusMessages: Record<CopyStatus, string> = {
+  idle: '',
+  success: 'Comandos copiados para a área de transferência.',
+  unsupported: 'Área de transferência indisponível. Selecione e copie os comandos manualmente.',
+  error: 'Não foi possível copiar. Selecione e copie os comandos manualmente.',
+};
+
 function TerminalBlock({ title, description, commands }: TerminalBlockProps) {
-  const [copied, setCopied] = useState(false);
+  const [copyStatus, setCopyStatus] = useState<CopyStatus>('idle');
   const commandText = commands.join('\n');
 
   async function copyCommands() {
-    await navigator.clipboard.writeText(commandText);
-    setCopied(true);
-    window.setTimeout(() => setCopied(false), 1800);
+    if (!navigator.clipboard?.writeText) {
+      setCopyStatus('unsupported');
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(commandText);
+      setCopyStatus('success');
+      window.setTimeout(() => setCopyStatus('idle'), 1800);
+    } catch {
+      setCopyStatus('error');
+    }
   }
+
+  const copied = copyStatus === 'success';
+  const statusMessage = copyStatusMessages[copyStatus];
 
   return (
     <article className="terminal-card">
@@ -75,6 +96,9 @@ function TerminalBlock({ title, description, commands }: TerminalBlockProps) {
       <button className="copy-button" type="button" onClick={copyCommands}>
         {copied ? 'Copiado' : 'Copiar comandos'}
       </button>
+      <p className="copy-status" role="status" aria-live="polite">
+        {statusMessage}
+      </p>
     </article>
   );
 }
@@ -123,19 +147,19 @@ export function App() {
             <p className="hero-lede">
               FlowAI adiciona contrato operacional, skills especializadas e uma base Obsidian ao seu projeto para orientar agentes do pedido à evidência.
             </p>
-            <div className="hero-actions" aria-label="Ações principais">
+            <div className="hero-actions" role="group" aria-label="Ações principais">
               <a className="button primary" href="#instalacao">Instalar FlowAI</a>
               <a className="button secondary" href={npmUrl}>Ver no npm</a>
             </div>
           </div>
-          <div className="workflow-visual" aria-label="Visual do workflow FlowAI">
+          <ol className="workflow-visual" aria-label="Visual do workflow FlowAI">
             {flowSteps.map((step, index) => (
-              <div className="visual-node" key={step}>
+              <li className="visual-node" key={step}>
                 <span>{String(index + 1).padStart(2, '0')}</span>
                 <strong>{step}</strong>
-              </div>
+              </li>
             ))}
-          </div>
+          </ol>
         </section>
 
         <section className="section" id="beneficios" aria-labelledby="benefits-title">
