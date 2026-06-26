@@ -14,7 +14,7 @@ The current scope is a static React landing page with product positioning, workf
 
 ## Technology
 
-React, TypeScript, Vite, Vitest, Testing Library, and CSS in `src/styles.css`. Product content is grounded in installed FlowAI package documentation under `node_modules/@mvoikolesco/flowai/README.md`.
+React, TypeScript, Vite, Tailwind CSS, Vitest, and Testing Library. The main landing page lives in `src/App.tsx`, with Tailwind/PostCSS providing utility classes and `src/styles.css` keeping only base Tailwind directives plus minimal global resets.
 
 ## Constraints
 

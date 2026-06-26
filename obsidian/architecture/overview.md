@@ -6,15 +6,16 @@ Static browser application presenting FlowAI to developers. External destination
 
 ## Components
 
-- `src/App.tsx`: reusable in-file React sections for header, progressive hero, abstract study-room/workflow visuals, benefits, animated workflow, package comparison, terminal install blocks with FlowAI states, operational principles, CTA, footer, scroll reveal behavior, and fine-pointer custom cursor.
-- `src/styles.css`: global warm academic/workshop visual system, responsive layout, ambient and functional transform/opacity animations, accessible focus states, custom cursor rules, and `prefers-reduced-motion` behavior.
-- `src/App.test.tsx`: content, package-link, FlowAI terminal-state, and copy-button coverage for success, unavailable Clipboard API, and rejected clipboard writes.
+- `src/App.tsx`: provided single-file React landing page with header/nav, hero, animated workflow trail, agent cards, package comparison, terminal copy interaction, memory graph, CTA, footer, injected global visual styles, and an `IntersectionObserver` reveal hook with fallback for non-browser test environments.
+- `src/styles.css`: Tailwind entrypoint plus minimal global resets; most page-specific visual rules are injected by `src/App.tsx`.
+- `tailwind.config.js` and `postcss.config.js`: Tailwind v3/PostCSS configuration for Vite builds.
+- `src/App.test.tsx`: smoke coverage for the provided page content, workflow/agent labels, npm package link, and main copy button.
 
 ## Data Flow
 
-The page is static except terminal copy buttons. Each terminal block joins command strings, checks for `navigator.clipboard.writeText`, writes when available, and exposes success, unsupported, or failure feedback through a visible `role="status"` live region.
+The page is static except the terminal copy button and reveal animations. The copy button writes `npm install @mvoikolesco/flowai` through `navigator.clipboard.writeText` when available and shows a temporary copied state.
 
-The custom cursor is decorative and enabled only for fine hover pointers when reduced motion is not requested; it uses `pointer-events: none` and leaves touch/reduced-motion users with the native cursor.
+Reveal sections subscribe to `IntersectionObserver`; when unavailable, they mark themselves visible asynchronously so tests and older environments can render the page without throwing.
 
 ## Runtime and Deployment
 

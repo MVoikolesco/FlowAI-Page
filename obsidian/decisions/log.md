@@ -29,3 +29,12 @@ Record durable decisions using this structure:
 - **Affected paths:** `src/App.tsx`, `src/styles.css`, `src/App.test.tsx`.
 - **Related notes:** [[../architecture/overview|Architecture]], [[../architecture/feature-map|Feature Map]], [[../features/index|Features]].
 
+## 2026-06-26 — Rebuild around provided Tailwind-style App component
+
+- **Context:** The project needed to be rebuilt from a provided `App.tsx` attachment, and the user allowed fully cleaning the existing implementation.
+- **Decision:** Replace the previous landing page implementation with the provided single-file React component, add Tailwind CSS/PostCSS for its utility classes, and keep project CSS as a minimal Tailwind entrypoint.
+- **Rationale:** The provided component depends on Tailwind-style utilities; adding Tailwind preserves the intended layout and avoids manually recreating a utility framework in local CSS.
+- **Consequences:** The page is now driven mostly by `src/App.tsx`, including injected global styles. Future visual edits should account for both Tailwind classes and the in-component `<style>` block.
+- **Affected paths:** `src/App.tsx`, `src/main.tsx`, `src/styles.css`, `src/App.test.tsx`, `tailwind.config.js`, `postcss.config.js`, `package.json`, `package-lock.json`.
+- **Related notes:** [[../architecture/overview|Architecture]], [[../architecture/feature-map|Feature Map]], [[../features/index|Features]].
+

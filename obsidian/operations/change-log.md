@@ -34,3 +34,19 @@ Record meaningful changes using this structure:
 - **Notes updated:** [[../architecture/overview|Architecture]], [[../architecture/feature-map|Feature Map]], [[../features/index|Features]], [[../decisions/log|Decision Log]], [[../operations/change-log|Change Log]].
 - **Limitations:** Responsiveness was validated through CSS breakpoints and automated build/test checks, not through a browser screenshot pass in this environment.
 
+## 2026-06-26 — Rebuilt React app from provided App.tsx
+
+- **Outcome:** Replaced the existing landing page with the provided React `App.tsx` experience and wired the project to render it through Vite.
+- **Scope:** `src/App.tsx`, `src/main.tsx`, `src/styles.css`, `src/App.test.tsx`, `tailwind.config.js`, `postcss.config.js`, `package.json`, `package-lock.json`, and affected Obsidian notes.
+- **Validation:** `npm run typecheck`, `npm run lint`, `npm test` (3 tests), and `npm run build` passed on 2026-06-26.
+- **Notes updated:** [[../architecture/project-overview|Project Overview]], [[../architecture/overview|Architecture]], [[../architecture/feature-map|Feature Map]], [[../features/index|Features]], [[../decisions/log|Decision Log]].
+- **Limitations:** Build produced Rolldown plugin timing warnings only; no browser screenshot pass was run.
+
+## 2026-06-26 — Restored workflow motor flow animation
+
+- **Outcome:** Restored the original moving SVG flow particles in the "motor de workflow · representação viva" hero visualization.
+- **Scope:** `src/App.tsx` plus affected feature notes.
+- **Validation:** `npm run typecheck`, `npm run lint`, `npm test` (3 tests), and `npm run build` passed on 2026-06-26.
+- **Notes updated:** [[../architecture/feature-map|Feature Map]], [[../features/index|Features]], [[../operations/change-log|Change Log]].
+- **Limitations:** Build produced Rolldown plugin timing warnings only; no browser screenshot pass was run.
+
