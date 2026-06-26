@@ -74,3 +74,11 @@ Record meaningful changes using this structure:
 - **Notes updated:** [[../architecture/feature-map|Feature Map]], [[../features/index|Features]], [[../operations/change-log|Change Log]].
 - **Limitations:** Favicon is SVG-only; no `.ico` fallback was added.
 
+## 2026-06-26 — Modularized React landing page
+
+- **Outcome:** Refactored the FlowAI landing page so `src/App.tsx` is a small composition root and responsibilities are split across components, sections, data, hooks, and CSS modules while preserving content, anchors, visuals, and copy behavior.
+- **Scope:** `src/App.tsx`, `src/main.tsx`, `src/components/`, `src/sections/`, `src/data/content.ts`, `src/hooks/useInView.ts`, `src/styles/flowai.css`, and affected Obsidian notes.
+- **Validation:** `npm run typecheck`, `npm run lint`, `npm run test` (3 tests), and `npm run build` passed on 2026-06-26. Build emitted Rolldown plugin timing warnings only.
+- **Notes updated:** [[../architecture/overview|Architecture]], [[../architecture/feature-map|Feature Map]], [[../features/index|Features]], [[../decisions/log|Decision Log]], [[../operations/change-log|Change Log]].
+- **Limitations:** No browser screenshot pass was run.
+

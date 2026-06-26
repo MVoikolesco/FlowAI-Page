@@ -3,7 +3,7 @@
 ## Implemented Features
 
 - Responsive FlowAI landing page rebuilt from the provided `App.tsx` attachment.
-- Tailwind-powered layout utilities with page-specific visual styles injected from `src/App.tsx`.
+- Tailwind-powered layout utilities with page-specific global visual styles in `src/styles/flowai.css`.
 - Sections: fixed nav/npm link, hero, workflow visualization, manifesto, six-stage workflow trail, six agent cards, package comparison, animated terminal, memory graph, final CTA, and footer.
 - Main copy button writes `npm install @mvoikolesco/flowai` and temporarily changes to `copiado`.
 - Workflow visualization includes the original moving SVG flow particles using `animateMotion` over the five workflow paths.
@@ -11,6 +11,7 @@
 - Custom cursor restores the original gold dot and trailing ring interaction on fine pointers, expanding over links/buttons and disabling itself for touch or reduced-motion contexts.
 - Browser tab icon is restored via `public/favicon.svg`, matching the circular FlowAI mark used in the page navigation/footer.
 - Reveal animations use `IntersectionObserver` with a test/legacy fallback.
+- The landing page implementation is organized by `src/components/`, `src/sections/`, `src/data/content.ts`, and `src/hooks/useInView.ts`, with `src/App.tsx` acting as a small composition root.
 
 ## Important Flows
 
