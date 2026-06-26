@@ -7,6 +7,9 @@
 - Sections: fixed nav/npm link, hero, workflow visualization, manifesto, six-stage workflow trail, six agent cards, package comparison, animated terminal, memory graph, final CTA, and footer.
 - Main copy button writes `npm install @mvoikolesco/flowai` and temporarily changes to `copiado`.
 - Workflow visualization includes the original moving SVG flow particles using `animateMotion` over the five workflow paths.
+- Memory graph visualization includes animated dashed write connection, pulsing root/new-memory nodes, writing status text, and graph corner marks.
+- Custom cursor restores the original gold dot and trailing ring interaction on fine pointers, expanding over links/buttons and disabling itself for touch or reduced-motion contexts.
+- Browser tab icon is restored via `public/favicon.svg`, matching the circular FlowAI mark used in the page navigation/footer.
 - Reveal animations use `IntersectionObserver` with a test/legacy fallback.
 
 ## Important Flows

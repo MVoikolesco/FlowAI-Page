@@ -334,6 +334,69 @@ const AgentCard: React.FC<{ agent: Agent }> = React.memo(({ agent }) => (
   </div>
 ));
 
+const CustomCursor: React.FC = () => {
+  const dotRef = useRef<HTMLDivElement>(null);
+  const ringRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!window.matchMedia || window.matchMedia('(hover: none), (pointer: coarse)').matches || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      return;
+    }
+
+    let mouseX = 0;
+    let mouseY = 0;
+    let ringX = 0;
+    let ringY = 0;
+    let frame = 0;
+
+    document.documentElement.classList.add('cursor-enabled');
+
+    const moveCursor = (event: PointerEvent) => {
+      mouseX = event.clientX;
+      mouseY = event.clientY;
+      if (dotRef.current) {
+        dotRef.current.style.left = `${mouseX}px`;
+        dotRef.current.style.top = `${mouseY}px`;
+      }
+    };
+
+    const setInteractiveState = (event: PointerEvent) => {
+      const target = event.target as Element | null;
+      const active = Boolean(target?.closest('a, button, [data-cursor="active"]'));
+      dotRef.current?.classList.toggle('active', active);
+      ringRef.current?.classList.toggle('active', active);
+    };
+
+    const animateRing = () => {
+      ringX += (mouseX - ringX) * 0.18;
+      ringY += (mouseY - ringY) * 0.18;
+      if (ringRef.current) {
+        ringRef.current.style.left = `${ringX}px`;
+        ringRef.current.style.top = `${ringY}px`;
+      }
+      frame = requestAnimationFrame(animateRing);
+    };
+
+    window.addEventListener('pointermove', moveCursor);
+    window.addEventListener('pointerover', setInteractiveState);
+    frame = requestAnimationFrame(animateRing);
+
+    return () => {
+      document.documentElement.classList.remove('cursor-enabled');
+      window.removeEventListener('pointermove', moveCursor);
+      window.removeEventListener('pointerover', setInteractiveState);
+      cancelAnimationFrame(frame);
+    };
+  }, []);
+
+  return (
+    <>
+      <div className="cursor-dot" ref={dotRef} aria-hidden="true"></div>
+      <div className="cursor-ring" ref={ringRef} aria-hidden="true"></div>
+    </>
+  );
+};
+
 const App: React.FC = () => {
   // Terminal logic state
   const [terminalLines, setTerminalLines] = useState([true, false, false, false, false, false]);
@@ -374,6 +437,48 @@ const App: React.FC = () => {
           --brown: #2a1f15; --brown-lt: #3a2a1a;
           --line: rgba(212, 175, 106, 0.18);
           --line-strong: rgba(212, 175, 106, 0.4);
+        }
+        .cursor-enabled * { cursor: none; }
+        .cursor-dot {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 5px;
+          height: 5px;
+          background: var(--gold);
+          border-radius: 50%;
+          pointer-events: none;
+          z-index: 9999;
+          transform: translate(-50%, -50%);
+          transition: width 0.25s ease, height 0.25s ease, background 0.25s ease;
+          box-shadow: 0 0 10px rgba(212, 175, 106, 0.7);
+        }
+        .cursor-ring {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 28px;
+          height: 28px;
+          border: 1px solid rgba(212, 175, 106, 0.5);
+          border-radius: 50%;
+          pointer-events: none;
+          z-index: 9998;
+          transform: translate(-50%, -50%);
+          transition:
+            width 0.35s cubic-bezier(0.2, 0.9, 0.3, 1),
+            height 0.35s cubic-bezier(0.2, 0.9, 0.3, 1),
+            border-color 0.3s,
+            opacity 0.3s;
+        }
+        .cursor-dot.active {
+          width: 7px;
+          height: 7px;
+          background: var(--mustard);
+        }
+        .cursor-ring.active {
+          width: 52px;
+          height: 52px;
+          border-color: rgba(200, 146, 42, 0.7);
         }
         html { scroll-behavior: smooth; }
         body {
@@ -462,6 +567,14 @@ const App: React.FC = () => {
 
         @media (prefers-reduced-motion: reduce) {
           *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+          .cursor-dot,
+          .cursor-ring { display: none !important; }
+          .cursor-enabled * { cursor: auto !important; }
+        }
+        @media (hover: none), (pointer: coarse) {
+          .cursor-dot,
+          .cursor-ring { display: none !important; }
+          .cursor-enabled * { cursor: auto !important; }
         }
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: var(--bg); }
@@ -469,6 +582,7 @@ const App: React.FC = () => {
         ::selection { background: rgba(212, 175, 106, 0.3); color: var(--ink); }
         *:focus-visible { outline: 2px solid var(--gold); outline-offset: 4px; }
       `}</style>
+      <CustomCursor />
 
       {/* Ambient lights otimizados (sem blur pesado, usando cores solidas com opacidade) */}
       <div className="fixed inset-0 pointer-events-none z-0">

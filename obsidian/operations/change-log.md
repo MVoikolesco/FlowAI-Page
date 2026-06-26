@@ -50,3 +50,27 @@ Record meaningful changes using this structure:
 - **Notes updated:** [[../architecture/feature-map|Feature Map]], [[../features/index|Features]], [[../operations/change-log|Change Log]].
 - **Limitations:** Build produced Rolldown plugin timing warnings only; no browser screenshot pass was run.
 
+## 2026-06-26 — Restored memory graph activity animation
+
+- **Outcome:** Restored animated activity in the "O projeto lembra de si" memory graph with a dashed write connection, pulsing root and new-memory nodes, writing status text, and corner marks.
+- **Scope:** `src/App.tsx` plus affected feature notes.
+- **Validation:** `npm run typecheck`, `npm run lint`, `npm test` (3 tests), and `npm run build` passed on 2026-06-26.
+- **Notes updated:** [[../architecture/feature-map|Feature Map]], [[../features/index|Features]], [[../operations/change-log|Change Log]].
+- **Limitations:** Build produced a Rolldown `vite:css` plugin timing warning only; no browser screenshot pass was run.
+
+## 2026-06-26 — Restored original custom cursor
+
+- **Outcome:** Restored the original custom cursor behavior with a gold dot, trailing ring, and active enlargement over interactive elements.
+- **Scope:** `src/App.tsx` plus affected feature notes.
+- **Validation:** `npm run typecheck`, `npm run lint`, `npm test` (3 tests), and `npm run build` passed on 2026-06-26.
+- **Notes updated:** [[../architecture/feature-map|Feature Map]], [[../features/index|Features]], [[../operations/change-log|Change Log]].
+- **Limitations:** Cursor is intentionally disabled for touch/coarse pointers and reduced-motion contexts; build produced a Rolldown `vite:css` plugin timing warning only.
+
+## 2026-06-26 — Restored browser tab icon
+
+- **Outcome:** Added the FlowAI circular mark as the browser tab icon and linked it from `index.html`.
+- **Scope:** `index.html`, `public/favicon.svg`, and affected feature notes.
+- **Validation:** `npm run build` passed and `curl.exe -I http://127.0.0.1:5173/favicon.svg` returned `HTTP/1.1 200 OK` with `Content-Type: image/svg+xml`.
+- **Notes updated:** [[../architecture/feature-map|Feature Map]], [[../features/index|Features]], [[../operations/change-log|Change Log]].
+- **Limitations:** Favicon is SVG-only; no `.ico` fallback was added.
+
