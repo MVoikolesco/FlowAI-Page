@@ -6,8 +6,12 @@ Static browser application presenting FlowAI to developers. External destination
 
 ## Components
 
-- `src/App.tsx`: provided single-file React landing page with header/nav, hero, animated workflow trail, agent cards, package comparison, terminal copy interaction, memory graph, CTA, footer, injected global visual styles, and an `IntersectionObserver` reveal hook with fallback for non-browser test environments.
-- `src/styles.css`: Tailwind entrypoint plus minimal global resets; most page-specific visual rules are injected by `src/App.tsx`.
+- `src/App.tsx`: compact composition root for the FlowAI landing page, assembling navigation, hero, content sections, cursor, ambient lights, CTA, and footer.
+- `src/components/`: reusable presentational and behavior components such as `Reveal`, `CustomCursor`, `SectionTitle`, `WorkflowNode`, `AgentCard`, `Nav`, and `AmbientLights`.
+- `src/sections/`: page section modules for hero, manifesto, workflow, agents, distributions, terminal copy interaction, memory graph, CTA, and footer.
+- `src/data/content.ts`: typed static content for workflow stages, agents, distributions, manifesto principles, hero index, and memory graph records.
+- `src/hooks/useInView.ts`: shared `IntersectionObserver` reveal hook with fallback for non-browser test environments.
+- `src/styles.css` and `src/styles/flowai.css`: Tailwind entrypoint/reset plus page-specific global visual rules moved out of JSX.
 - `tailwind.config.js` and `postcss.config.js`: Tailwind v3/PostCSS configuration for Vite builds.
 - `src/App.test.tsx`: smoke coverage for the provided page content, workflow/agent labels, npm package link, and main copy button.
 

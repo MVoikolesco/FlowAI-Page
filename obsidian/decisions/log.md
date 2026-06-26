@@ -38,3 +38,12 @@ Record durable decisions using this structure:
 - **Affected paths:** `src/App.tsx`, `src/main.tsx`, `src/styles.css`, `src/App.test.tsx`, `tailwind.config.js`, `postcss.config.js`, `package.json`, `package-lock.json`.
 - **Related notes:** [[../architecture/overview|Architecture]], [[../architecture/feature-map|Feature Map]], [[../features/index|Features]].
 
+## 2026-06-26 — Modular landing page structure
+
+- **Context:** `src/App.tsx` had grown into a large single-file implementation combining hooks, reusable components, static content, section markup, interaction state, and injected global CSS.
+- **Decision:** Split the landing page into `src/components/`, `src/sections/`, `src/data/content.ts`, `src/hooks/useInView.ts`, and `src/styles/flowai.css`, keeping `src/App.tsx` as a composition root.
+- **Rationale:** The structure preserves the static page behavior while making future section, content, hook, and style changes easier to locate and review without adding dependencies.
+- **Consequences:** More files are involved in page changes, but responsibilities are explicit and page-specific global styles no longer live inside JSX.
+- **Affected paths:** `src/App.tsx`, `src/components/`, `src/sections/`, `src/data/content.ts`, `src/hooks/useInView.ts`, `src/styles/flowai.css`, `src/main.tsx`.
+- **Related notes:** [[../architecture/overview|Architecture]], [[../architecture/feature-map|Feature Map]], [[../features/index|Features]].
+
