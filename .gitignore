@@ -1,2 +1,5 @@
 node_modules/
 .opencode
+dist/
+coverage/
+*.log
